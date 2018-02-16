@@ -254,7 +254,7 @@ impl BotMovementTrait for Bot{
        
         }
         //TODO inefficient?
-        let pos=bota.val.pos;
+        //let pos=bota.val.pos;
         bota.update_box(&prop.radius.radius());   
         
 

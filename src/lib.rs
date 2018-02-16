@@ -10,6 +10,7 @@ mod botlib;
 mod sys;
 mod menusys;
 mod wrap_around;
+mod menu_primitives;
 
 
 pub use menusys::MenuGame;

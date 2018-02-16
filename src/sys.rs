@@ -19,13 +19,13 @@ use botlib::mouse::MouseProp;
 use botlib::bot;
 use std::marker::PhantomData;
 use kenmisc;
-use kenmisc::log::Logger;
+//use kenmisc::log::Logger;
 use dinotree::support::DefaultDepthLevel;
 use axgeom::AxisTrait;
 use botlib::bot::BBot;
-use ordered_float::NotNaN;
-use super::mlog;
-use sys::log::LogT;
+//use ordered_float::NotNaN;
+//use super::mlog;
+//use sys::log::LogT;
 //use testy;
 use Vert;
 pub mod log2{
@@ -153,7 +153,7 @@ impl TreeDraw for TreeDrawReal{
 pub struct TreeNoDraw{
 }
 impl TreeDraw for TreeNoDraw{
-    fn get_num_verticies(height:usize)->usize{
+    fn get_num_verticies(_height:usize)->usize{
         0
     }
     fn update<A:AxisTrait>(_rect:&Rect<f32>,_tree:&TreeCache<A,Numf32>,_verts:&mut [Vert]){
@@ -236,7 +236,7 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
         //let mlog=&mut self.general_log;
 
 
-        let time_all=kenmisc::Timer2::new();
+        let _time_all=kenmisc::Timer2::new();
         let bots=&mut self.bots;
         {                
             let border=&self.border;
@@ -244,10 +244,10 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
             let bot_prop=&self.bot_prop;
             let treecache=&mut self.treecache;
             //let graphics=&mut self.graphics;
-            let bot_graphics=&mut self.bot_graphics;
+            //let bot_graphics=&mut self.bot_graphics;
             {
 
-                let rebal=kenmisc::Timer2::new();
+                let _rebal=kenmisc::Timer2::new();
 
                 
                 
@@ -275,7 +275,7 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
                             let total=total as f32;
 
                             //add a little more urgency to dividers near the root.
-                            let total=(total*0.003+self.0);
+                            let total=total*0.003+self.0;
                             a.0+=b*total;
                         }
                     }
@@ -283,7 +283,7 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
                     //let bb=MedianRelax::new(B(4.0));
                     let bb=MedianRelax::new(B(self.bot_prop.radius.radius()));
                     
-                    let (mut dyntree,bag)=DynTree::new::<par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimer2>
+                    let (mut dyntree,_bag)=DynTree::new::<par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
                         (bots,treecache,&bb);
                     
                     //rebal_log.write_data(&bag.into_vec());
@@ -299,7 +299,7 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
                                 
 
 
-                            let query=kenmisc::Timer2::new();
+                            //let query=kenmisc::Timer2::new();
 
                             let clos=|cc:ColPair<BBot>|{
                                 use botlib::bot::BotMovementTrait;
@@ -307,7 +307,7 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
                                 Bot::collide(bot_prop,cc.a.1,cc.b.1);
                             };
 
-                            let v=dyntree.for_every_col_pair::<DefaultDepthLevel,_,treetimer::TreeTimer2>(clos);
+                            let _v=dyntree.for_every_col_pair::<DefaultDepthLevel,_,treetimer::TreeTimer2>(clos);
                             //colfind_log.write_data(&v.into_vec());
                 
                             
@@ -338,14 +338,14 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
         
                 {
                     {
-                        let upd=kenmisc::Timer2::new();
+                        let _upd=kenmisc::Timer2::new();
                         bot::update(bots,bot_prop,border);
                         //bo.update(&self.border);
                         //mlog.write(log::Typ::BotUpdate,upd.elapsed());
                     }
                    
                     {
-                        let upd=kenmisc::Timer2::new();
+                        let _upd=kenmisc::Timer2::new();
 
                         //let verts=graphics.drawer.get_range_mut(&graphics.bot_handle);
                         
@@ -406,8 +406,8 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSystem<A,TDraw> {
 
         let mut bots = bot::create_bots(num_bots,&world,&bot_prop);
 
-        let r=bot_prop.radius.radius2()*2.0;
-        let padded_world:Rect<f32>=*world.clone().grow(r);
+        //let r=bot_prop.radius.radius2()*2.0;
+        //let padded_world:Rect<f32>=*world.clone().grow(r);
 
         //TODO should it be based on max prop or average prop
         let height = compute_tree_height(bots.len(), bot_prop.radius.radius());
@@ -417,7 +417,7 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSystem<A,TDraw> {
 
         {         
             let k=MedianStrict::<Numf32>::new();
-            let (mut dyntree,_bag)=DynTree::new::<par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
+            let (_dyntree,_bag)=DynTree::new::<par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
                     (&mut bots,&mut treecache,&k);
         }
 

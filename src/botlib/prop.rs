@@ -7,7 +7,6 @@ pub struct RadiusProp {
     radius: f32,
     radius2: f32,
     radius2_squared: f32,
-    radius_x_root_2_inv: f32,
 }
 impl RadiusProp {
 
@@ -19,7 +18,7 @@ impl RadiusProp {
             radius: radius,
             radius2: k,
             radius2_squared: k.powi(2),
-            radius_x_root_2_inv: radius * (1.0 / 1.4142),
+            //radius_x_root_2_inv: radius * (1.0 / 1.4142),
         }
     }
 
@@ -41,9 +40,11 @@ impl RadiusProp {
         self.radius2_squared
     }
 
+    /*
     ///Returns the cached radius*(1/1.4142)
     #[inline]
     pub fn radius_x_root_2_inv(&self) -> f32 {
         self.radius_x_root_2_inv
     }
+    */
 }
