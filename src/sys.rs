@@ -1,17 +1,19 @@
 use axgeom;
 use botlib::graphics::BotLibGraphics;
 use dinotree::graphics::GenTreeGraphics;
-use dinotree::DynTree;
+use dinotree::DinoTree;
 use dinotree::multirect::Rects;
 use dinotree::*;
 use dinotree::tools::par;
 use dinotree::median::*;
 use dinotree::support::Numf32;
 use dinotree;
+use dinotree::DynTreeTrait;
 use axgeom::Rect;
 use wrap_around::WrapAround;
 use botlib::mouse::Mouse;
 use botlib::bot::Bot;
+
 //use simpdraw;
 use std;
 use botlib::bot::BotProp;
@@ -283,7 +285,7 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
                     //let bb=MedianRelax::new(B(4.0));
                     let bb=MedianRelax::new(B(self.bot_prop.radius.radius()));
                     
-                    let (mut dyntree,_bag)=DynTree::new::<par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
+                    let (mut dyntree,_bag)=DinoTree::new::<par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
                         (bots,treecache,&bb);
                     
                     //rebal_log.write_data(&bag.into_vec());
@@ -417,7 +419,7 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSystem<A,TDraw> {
 
         {         
             let k=MedianStrict::<Numf32>::new();
-            let (_dyntree,_bag)=DynTree::new::<par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
+            let (_dyntree,_bag)=DinoTree::new::<par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
                     (&mut bots,&mut treecache,&k);
         }
 
