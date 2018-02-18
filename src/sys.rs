@@ -6,6 +6,8 @@ use dinotree::multirect::Rects;
 use dinotree::*;
 use dinotree::tools::par;
 use dinotree::median::*;
+use dinotree::median::relax::*;
+use dinotree::median::strict::*;
 use dinotree::support::Numf32;
 use dinotree;
 use dinotree::DynTreeTrait;
@@ -21,14 +23,10 @@ use botlib::mouse::MouseProp;
 use botlib::bot;
 use std::marker::PhantomData;
 use kenmisc;
-//use kenmisc::log::Logger;
 use dinotree::support::DefaultDepthLevel;
 use axgeom::AxisTrait;
 use botlib::bot::BBot;
-//use ordered_float::NotNaN;
-//use super::mlog;
-//use sys::log::LogT;
-//use testy;
+
 use Vert;
 pub mod log2{
 
@@ -164,34 +162,40 @@ impl TreeDraw for TreeNoDraw{
 
 
 
-
-/*
-pub struct BotSysGraphics{
-    pub drawer:simpdraw::Drawer<Vert>,
-    pub bot_handle:simpdraw::RangeID,
-    pub tree_handle:simpdraw::RangeID
+use sys::log::LogT;
+use kenmisc::log::Logger;
+use mlog;
+pub struct LogSystem{
+    pub general_log:mlog::MLog,
+    pub rebal_log:Logger,
+    pub colfind_log:Logger
 }
+impl LogSystem{
+    pub fn new(height:usize)->LogSystem{
 
-impl BotSysGraphics{
-    pub fn new<TDraw:TreeDraw>(bots:&[BBot],height:usize)->BotSysGraphics{
-       
+        let mut general_log=mlog::MLog::new("/storage/emulated/0/Download/data.csv");
 
-        let mut drawer=simpdraw::Drawer::new();
-        let bot_handle=drawer.add(BotLibGraphics::get_num_verticies(bots.len()));
-        let tree_handle=drawer.add(TDraw::get_num_verticies(height)); //TODO FIX ME
+        let mut rebal_log={
+            let mut rebal_log=Logger::new("/storage/emulated/0/Download/rebal.csv");
+            let a:Vec<String>=(0..height).map(|a|format!("level {}",a)).collect();
+            rebal_log.write_str("Iteration",&a);
+            rebal_log
+        };
 
-        BotSysGraphics{drawer:drawer,bot_handle:bot_handle,tree_handle:tree_handle}
+        let mut colfind_log={
+            let mut query_log=Logger::new("/storage/emulated/0/Download/query.csv");
+            let a:Vec<String>=(0..height).map(|a|format!("level {}",a)).collect();
+            query_log.write_str("Iteration",&a);
+            query_log
+        };
+
+        LogSystem{general_log,rebal_log,colfind_log}
     }
 }
-*/
-
-
-
 
 
 
 pub struct BotSystem<A:AxisTrait,TDraw:TreeDraw> {
-    //graphics:BotSysGraphics,
     bot_graphics:BotLibGraphics,
     mouse_prop:MouseProp,
     bots: Vec<BBot>,
@@ -199,11 +203,7 @@ pub struct BotSystem<A:AxisTrait,TDraw:TreeDraw> {
     border: axgeom::Rect<f32>,
     treecache:TreeCache<A,Numf32>,
     phantom:PhantomData<TDraw>,
-    /*
-    general_log:mlog::MLog,
-    rebal_log:Logger,
-    colfind_log:Logger
-    */
+    logsys:LogSystem
 }
 
 
@@ -216,27 +216,18 @@ pub trait BotSysTrait{
 impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
 
     fn get_num_verticies(&self)->usize{
-
         let height = compute_tree_height(self.bots.len(), self.bot_prop.radius.radius());
-        
-
         TDraw::get_num_verticies(height)+BotLibGraphics::get_num_verticies(self.bots.len())
     }
     fn get_verticies(&self,verts:&mut [Vert])  {
         let height = compute_tree_height(self.bots.len(), self.bot_prop.radius.radius());
         
         let (a,b)=verts.split_at_mut(TDraw::get_num_verticies(height));
-
         TDraw::update(&self.border,&self.treecache,a);
-
         self.bot_graphics.update(&self.bot_prop,&self.bots,b);
     }
 
     fn step(&mut self, poses: &[axgeom::Vec2]) {
-        //let rebal_log=&mut self.rebal_log;
-        //let colfind_log=&mut self.colfind_log;
-        //let mlog=&mut self.general_log;
-
 
         let _time_all=kenmisc::Timer2::new();
         let bots=&mut self.bots;
@@ -245,32 +236,15 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
             let mouse_prop=&self.mouse_prop;
             let bot_prop=&self.bot_prop;
             let treecache=&mut self.treecache;
-            //let graphics=&mut self.graphics;
-            //let bot_graphics=&mut self.bot_graphics;
+
             {
-
                 let _rebal=kenmisc::Timer2::new();
-
-                
-                
-
-               
-                //      |rebal(0)|
-                //      |rebal(1)|query(0)|
-                //      |rebal(2)|query(1)|
-                //      |rebal(3)|query(2)|
-                //      |rebal(4)|query(3)|
-                //
-                //      
-
-                
-
 
                 {
                     struct B(
                         f32
                     );
-                    impl median::DivMoveStrat for B{
+                    impl DivMoveStrat for B{
                         type N=Numf32;
                         fn move_divider(&self,a:&mut Self::N,total:usize,b:f32){
                             
@@ -282,13 +256,12 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
                         }
                     }
                     
-                    //let bb=MedianRelax::new(B(4.0));
                     let bb=MedianRelax::new(B(self.bot_prop.radius.radius()));
                     
-                    let (mut dyntree,_bag)=DinoTree::new::<par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
+                    let (mut dyntree,_bag)=DinoTree::new::<par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimer2>
                         (bots,treecache,&bb);
                     
-                    //rebal_log.write_data(&bag.into_vec());
+                    self.logsys.rebal_log.write_data(&_bag.into_vec());
 
 
                     //the dynamic tree made a copy of the bots.
@@ -296,73 +269,52 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
                     //later will add together the copy and the source.
                     
                     {
-                        let mut handle_collisions=||{
-                            //mlog.write(log::Typ::Rebal,rebal.elapsed());
-                                
-
-
-                            //let query=kenmisc::Timer2::new();
-
-                            let clos=|cc:ColPair<BBot>|{
-                                use botlib::bot::BotMovementTrait;
-
-                                Bot::collide(bot_prop,cc.a.1,cc.b.1);
-                            };
-
-                            let _v=dyntree.for_every_col_pair::<DefaultDepthLevel,_,treetimer::TreeTimer2>(clos);
-                            //colfind_log.write_data(&v.into_vec());
-                
-                            
-                            //mlog.write(log::Typ::Query,query.elapsed());
+                        self.logsys.general_log.write(log::Typ::Rebal,_rebal.elapsed());
                             
 
-                            WrapAround::handle(&mut dyntree,border,bot_prop);   
 
-                            
+                        let query=kenmisc::Timer2::new();
 
-                            for k in poses{
-                                let mouse=Mouse::new(k,mouse_prop);
-                                handle_mouse(bot_prop,&mut dyntree,&mouse);
-                                WrapAround::handle_mouse(bot_prop,&mut dyntree,border,&mouse);
-                            }
+                        let clos=|cc:ColPair<BBot>|{
+                            use botlib::bot::BotMovementTrait;
+
+                            Bot::collide(bot_prop,cc.a.1,cc.b.1);
                         };
 
-                        handle_collisions();
+                        let _v=dyntree.for_every_col_pair::<DefaultDepthLevel,_,treetimer::TreeTimer2>(clos);
+                        self.logsys.colfind_log.write_data(&_v.into_vec());
+            
+                        
+                        self.logsys.general_log.write(log::Typ::Query,query.elapsed());
+                        
+
+                        WrapAround::handle(&mut dyntree,border,bot_prop);   
+
+                        
+
+                        for k in poses{
+                            let mouse=Mouse::new(k,mouse_prop);
+                            handle_mouse(bot_prop,&mut dyntree,&mouse);
+                            WrapAround::handle_mouse(bot_prop,&mut dyntree,border,&mouse);
+                        }
+                        
                     }
 
                     
-                    //mlog.write(log::Typ::RebalQuery,rebal.elapsed());
+                    self.logsys.general_log.write(log::Typ::RebalQuery,_rebal.elapsed());
 
                 }
-                
-
-                //TDraw::update(border,treecache,graphics.drawer.get_range_mut(&graphics.tree_handle));
         
                 {
-                    {
-                        let _upd=kenmisc::Timer2::new();
-                        bot::update(bots,bot_prop,border);
-                        //bo.update(&self.border);
-                        //mlog.write(log::Typ::BotUpdate,upd.elapsed());
-                    }
-                   
-                    {
-                        let _upd=kenmisc::Timer2::new();
-
-                        //let verts=graphics.drawer.get_range_mut(&graphics.bot_handle);
-                        
-                        //bot_graphics.update(bot_prop,bots,verts);
-                        //mlog.write(log::Typ::Graphic,upd.elapsed());
-                    }
+                    let _upd=kenmisc::Timer2::new();
+                    bot::update(bots,bot_prop,border);
+                    self.logsys.general_log.write(log::Typ::BotUpdate,_upd.elapsed());
                 }
             
             
-                //mlog.write(log::Typ::Total,time_all.elapsed());
-                //mlog.newline();
+                self.logsys.general_log.write(log::Typ::Total,_time_all.elapsed());
+                self.logsys.general_log.newline();
             }
-
-            
-            //bots
         }
     
                 
@@ -404,16 +356,10 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSystem<A,TDraw> {
         let unit=bot::get_unit(startx,starty);
         let (bot_prop,mouse_prop)=bot::create_from_radius(br,unit*10.0);
 
-
-
         let mut bots = bot::create_bots(num_bots,&world,&bot_prop);
-
-        //let r=bot_prop.radius.radius2()*2.0;
-        //let padded_world:Rect<f32>=*world.clone().grow(r);
 
         //TODO should it be based on max prop or average prop
         let height = compute_tree_height(bots.len(), bot_prop.radius.radius());
-        //println!("fheight={:?}",height);
 
         let mut treecache=TreeCache::new(height);
 
@@ -422,43 +368,23 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSystem<A,TDraw> {
             let (_dyntree,_bag)=DinoTree::new::<par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
                     (&mut bots,&mut treecache,&k);
         }
-
-        //let graphics=BotSysGraphics::new::<TDraw>(&mut bots,treecache.get_height());
         
         let bot_graphics=BotLibGraphics::new(&bot_prop);
         
-
-        /*
-        let mut general_log=mlog::MLog::new("/storage/emulated/0/Download/data.csv");
-
-        let mut rebal_log={
-            let mut rebal_log=Logger::new("/storage/emulated/0/Download/rebal.csv");
-            let a:Vec<String>=(0..height).map(|a|format!("level {}",a)).collect();
-            rebal_log.write_str("Iteration",&a);
-            rebal_log
-        };
-
-        let mut colfind_log={
-            let mut query_log=Logger::new("/storage/emulated/0/Download/query.csv");
-            let a:Vec<String>=(0..height).map(|a|format!("level {}",a)).collect();
-            query_log.write_str("Iteration",&a);
-            query_log
-        };
-        */
+        let logsys=LogSystem::new(height);
+        
+        
 
       
         BotSystem {
             bot_graphics:bot_graphics,
-            //graphics:graphics,
             mouse_prop:mouse_prop,
             bots,
             bot_prop,
             border: world,
             treecache:treecache,
             phantom:PhantomData,
-            //general_log,
-            //rebal_log,
-            //colfind_log
+            logsys
         }
     }
 }
