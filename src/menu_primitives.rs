@@ -85,16 +85,18 @@ impl Button{
             //let i=i as f32;
             let k=bb.next().unwrap();
             
-            let k=k.get_mut().1;
+            //let k=k.get_mut().1;
+            
             let x=pos.0 as f32;
             let y=pos.1 as f32;
-            k.vel=axgeom::Vec2::new(0.0,0.0);
-            k.acc=axgeom::Vec2::new(0.0,0.0);
+            
+            k.stuff.vel=axgeom::Vec2::new(0.0,0.0);
+            k.val.acc=axgeom::Vec2::new(0.0,0.0);
 
             let dx=self.dim.get_range2::<XAXIS_S>();
             let yx=self.dim.get_range2::<YAXIS_S>();
 
-            k.pos=axgeom::Vec2::new(dx.start+x*self.spacing,yx.start+y*self.spacing);
+            k.stuff.pos=axgeom::Vec2::new(dx.start+x*self.spacing,yx.start+y*self.spacing);
         }
     }
 }
@@ -127,17 +129,17 @@ impl NumberThing{
             for pos in digit{
                 let k=bb.next().unwrap();
                 
-                let k=k.get_mut().1;
+                //let k=k.get_mut().1;
 
                 let x=pos.0 as f32;
                 let y=pos.1 as f32;
-                k.vel=axgeom::Vec2::new(0.0,0.0);
-                k.acc=axgeom::Vec2::new(0.0,0.0);
+                k.stuff.vel=axgeom::Vec2::new(0.0,0.0);
+                k.val.acc=axgeom::Vec2::new(0.0,0.0);
 
                 let tr=self.top_right.get();
                 let ds=self.digit_spacing;
                 let ps=self.pixel_spacing;
-                k.pos=axgeom::Vec2::new(tr.0-i*ds+x*ps,tr.1+y*ps);
+                k.stuff.pos=axgeom::Vec2::new(tr.0-i*ds+x*ps,tr.1+y*ps);
             }
         }
 

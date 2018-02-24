@@ -4,7 +4,7 @@ use botlib::bot::BotProp;
 
 //use simpdraw::Vertex;
 use botlib::bot::BBot;
-use botlib::bot::Bot;
+//use botlib::bot::Bot;
 use Vert;
 
 pub struct BotLibGraphics{
@@ -42,11 +42,11 @@ impl BotLibGraphics{
         assert!(Self::get_num_verticies(bots.len())<=verticies.len());
 		for (a,b) in bots.iter().enumerate()
 		{	
-            self.update_triangles(prop,a, &b.val,verticies);
+            self.update_triangles(prop,a, b,verticies);
         }
     }
 
-    fn update_triangles(&self,_prop:&BotProp,bot_ind: usize, bot: &Bot, verticies: &mut [Vert]) {
+    fn update_triangles(&self,_prop:&BotProp,bot_ind: usize, bot: &BBot, verticies: &mut [Vert]) {
 
         let i = bot_ind as usize * 3;
 
@@ -61,10 +61,10 @@ impl BotLibGraphics{
         };
         */
                 
-        
-        let p1 = *bot.pos() + self.p1;//.rotate_by(velnorm);
-        let p2 = *bot.pos() + self.p2;//.rotate_by(velnorm);
-        let p3 = *bot.pos() + self.p3;//.rotate_by(velnorm);
+        let pos=&bot.stuff.pos;
+        let p1 = *pos + self.p1;//.rotate_by(velnorm);
+        let p2 = *pos + self.p2;//.rotate_by(velnorm);
+        let p3 = *pos + self.p3;//.rotate_by(velnorm);
 
         //let hue_multiplier=vel_len/1.0;//TODO whatever the max vel is
         //let acc_mag=bot.get_acc().len()*0.25;

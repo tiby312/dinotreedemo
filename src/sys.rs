@@ -14,7 +14,7 @@ use dinotree::DynTreeTrait;
 use axgeom::Rect;
 use wrap_around::WrapAround;
 use botlib::mouse::Mouse;
-use botlib::bot::Bot;
+//use botlib::bot::Bot;
 
 //use simpdraw;
 use std;
@@ -276,9 +276,9 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
                         let query=kenmisc::Timer2::new();
 
                         let clos=|cc:ColPair<BBot>|{
-                            use botlib::bot::BotMovementTrait;
+                            //use botlib::bot::BotMovementTrait;
 
-                            Bot::collide(bot_prop,cc.a.1,cc.b.1);
+                            bot::collide(bot_prop,cc);
                         };
 
                         let _v=dyntree.for_every_col_pair::<DefaultDepthLevel,_,treetimer::TreeTimer2>(clos);
@@ -396,11 +396,11 @@ fn handle_mouse<K:DynTreeTrait<T=BBot,Num=Numf32>>(prop:&BotProp,tree:&mut K,mou
 
     let mut rect=Rects::new(tree);//tree.create_rects();//Rects::new(tree);
     rect.for_all_in_rect(&bot::convert_to_nan(*mouse.get_rect()),
-                           &mut |cc:ColSingle<BBot>| {
+                           &mut |mut cc:ColSingle<BBot>| {
 
                         //println!("collide mouse!");
-            use botlib::bot::BotMovementTrait;
-            Bot::collide_mouse(cc.1,prop,&mouse);
+            //use botlib::bot::BotMovementTrait;
+            bot::collide_mouse(&mut cc,prop,&mouse);
 
         });
 }

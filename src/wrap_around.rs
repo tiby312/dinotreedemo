@@ -1,7 +1,7 @@
 
 use axgeom;
 use botlib::bot::BotTrait;
-use botlib::bot::Bot;
+//use botlib::bot::Bot;
 use axgeom::Rect;
 use botlib::bot::BotProp;
 
@@ -13,27 +13,31 @@ use dinotree::support::Numf32;
 use botlib::bot::BBot;
 use botlib::bot;
 use axgeom::AxisTrait;
+
+use botlib::bot::BotStuff;
+use botlib::bot::BotAcc;
 //use dinotree::multirect::MultiRectTrait;
 
-struct BotWrapper<'a,X:BotTrait+'a>{
-	bot:&'a mut X,
+struct BotWrapper<'a>{
+	bot_stuff:&'a BotStuff,
+	acc:&'a mut BotAcc,
 	pos:axgeom::Vec2
 }
 
-impl<'a,X:BotTrait+'a> BotTrait for BotWrapper<'a,X>{
+impl<'a> BotTrait for BotWrapper<'a>{
 
 	fn apply_force(&mut self,vec:&axgeom::Vec2){
-		self.bot.apply_force(vec);
+		self.acc.acc+=*vec;//.apply_force(vec);
 	}
 	fn pos(&self)->&axgeom::Vec2{
 		&self.pos
 	}
 
 	fn vel(&self)->&axgeom::Vec2{
-		self.bot.vel()
+		&self.bot_stuff.vel
 	}
 	fn get_acc(&self)->&axgeom::Vec2{
-		self.bot.get_acc()
+		&self.acc.acc
 	}
 }
 use botlib::mouse::Mouse;
@@ -77,9 +81,9 @@ impl WrapAround{
 
         rects.for_all_in_rect(
         			&bot::convert_to_nan(*mm.get_rect()),
-                    &mut |cc:ColSingle<BBot>| {
-                use botlib::bot::BotMovementTrait;
-                Bot::collide_mouse(cc.1,prop,&mm);
+                    &mut |mut cc:ColSingle<BBot>| {
+                //use botlib::bot::BotMovementTrait;
+                bot::collide_mouse(&mut cc,prop,&mm);
 		    });
 		
 	}
@@ -166,28 +170,31 @@ impl WrapAround{
 		//println!("rect222={:?}",rect2);
 
 		let mut func=|cc:ColPair<BBot>|{
-			let a=cc.a.1;
-			let b=cc.b.1;
-		    //println!("yay={:?}",(&*a,&*b));
 			let top_down_length=top_down_length;
 			let top_d_axis=top_d_axis;
 
-		    let bots_i= (a,b);
-
-		    let mut pos=BotTrait::pos(bots_i.0).clone();
+		    //let mut pos=BotTrait::pos(bots_i.0).clone();
+		    let mut pos=cc.a.0.pos.clone();
+		    
 		    *pos.get_axis_mut(top_d_axis)+=top_down_length;
 		      
 		    let mut bots={		        
 		        //Change position to wrap around
-		        let x=BotWrapper{bot:bots_i.0,pos:pos};
-		        let pp=*bots_i.1.pos();
-		        let y=BotWrapper{bot:bots_i.1,pos:pp};
+		        let x=BotWrapper{bot_stuff:cc.a.0,acc:cc.a.1,pos:pos};
+		        //let pp=*bots_i.1.pos();
+		        let y=BotWrapper{bot_stuff:cc.b.0,acc:cc.b.1,pos:cc.b.0.pos};
 		        (x,y)
 		    };
-			use botlib::bot::BotMovementTrait;
-		    Bot::collide(prop,&mut bots.0,&mut bots.1);
-		    
+
+		    //TODO fix
+
+		    //TODO NEED TO FIXXX
+
+		    //bot::collide(prop,&mut bots.0,&mut bots.1);
+			
+			
 		};
+		println!("wraparound fix");
 
 		let rect1=bot::convert_to_nan(rect1);
 		let rect2=bot::convert_to_nan(rect2);
