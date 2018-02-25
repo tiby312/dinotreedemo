@@ -1,5 +1,5 @@
 use axgeom;
-use botlib::bot::BotTrait;
+//use botlib::bot::BotTrait;
 use botlib::bot::BotProp;
 
 //use simpdraw::Vertex;

@@ -1,6 +1,6 @@
 
 use axgeom;
-use botlib::bot::BotTrait;
+//use botlib::bot::BotTrait;
 //use botlib::bot::Bot;
 use axgeom::Rect;
 use botlib::bot::BotProp;
@@ -18,6 +18,7 @@ use botlib::bot::BotStuff;
 use botlib::bot::BotAcc;
 //use dinotree::multirect::MultiRectTrait;
 
+/*
 struct BotWrapper<'a>{
 	bot_stuff:&'a BotStuff,
 	acc:&'a mut BotAcc,
@@ -40,6 +41,7 @@ impl<'a> BotTrait for BotWrapper<'a>{
 		&self.acc.acc
 	}
 }
+*/
 use botlib::mouse::Mouse;
 
 
@@ -167,34 +169,24 @@ impl WrapAround{
 			rr
 		};
 
-		//println!("rect222={:?}",rect2);
 
 		let mut func=|cc:ColPair<BBot>|{
 			let top_down_length=top_down_length;
 			let top_d_axis=top_d_axis;
 
 		    //let mut pos=BotTrait::pos(bots_i.0).clone();
+		    let mut copy_botstuff=cc.a.0.clone();
 		    let mut pos=cc.a.0.pos.clone();
-		    
 		    *pos.get_axis_mut(top_d_axis)+=top_down_length;
-		      
-		    let mut bots={		        
-		        //Change position to wrap around
-		        let x=BotWrapper{bot_stuff:cc.a.0,acc:cc.a.1,pos:pos};
-		        //let pp=*bots_i.1.pos();
-		        let y=BotWrapper{bot_stuff:cc.b.0,acc:cc.b.1,pos:cc.b.0.pos};
-		        (x,y)
-		    };
-
-		    //TODO fix
-
-		    //TODO NEED TO FIXXX
-
-		    //bot::collide(prop,&mut bots.0,&mut bots.1);
-			
+		    copy_botstuff.pos=pos;
+		     
+		    let cc_copy=ColPair{a:(&copy_botstuff,cc.a.1),b:(cc.b.0,cc.b.1)};
+		    
+		    bot::collide(prop,cc_copy);
+						
 			
 		};
-		println!("wraparound fix");
+		//println!("wraparound fix");
 
 		let rect1=bot::convert_to_nan(rect1);
 		let rect2=bot::convert_to_nan(rect2);

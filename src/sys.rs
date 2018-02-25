@@ -203,7 +203,7 @@ pub struct BotSystem<A:AxisTrait,TDraw:TreeDraw> {
     border: axgeom::Rect<f32>,
     treecache:TreeCache<A,Numf32>,
     phantom:PhantomData<TDraw>,
-    logsys:LogSystem
+    //logsys:LogSystem
 }
 
 
@@ -257,11 +257,11 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
                     }
                     
                     let bb=MedianRelax::new(B(self.bot_prop.radius.radius()));
-                    
-                    let (mut dyntree,_bag)=DinoTree::new::<par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimer2>
+                                                                                                        //TreeTimer2
+                    let (mut dyntree,_bag)=DinoTree::new::<par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
                         (bots,treecache,&bb);
                     
-                    self.logsys.rebal_log.write_data(&_bag.into_vec());
+                    //self.logsys.rebal_log.write_data(&_bag.into_vec());
 
 
                     //the dynamic tree made a copy of the bots.
@@ -269,7 +269,7 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
                     //later will add together the copy and the source.
                     
                     {
-                        self.logsys.general_log.write(log::Typ::Rebal,_rebal.elapsed());
+                        //self.logsys.general_log.write(log::Typ::Rebal,_rebal.elapsed());
                             
 
 
@@ -282,10 +282,10 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
                         };
 
                         let _v=dyntree.for_every_col_pair::<DefaultDepthLevel,_,treetimer::TreeTimer2>(clos);
-                        self.logsys.colfind_log.write_data(&_v.into_vec());
+                        //self.logsys.colfind_log.write_data(&_v.into_vec());
             
                         
-                        self.logsys.general_log.write(log::Typ::Query,query.elapsed());
+                        //self.logsys.general_log.write(log::Typ::Query,query.elapsed());
                         
 
                         WrapAround::handle(&mut dyntree,border,bot_prop);   
@@ -301,19 +301,19 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
                     }
 
                     
-                    self.logsys.general_log.write(log::Typ::RebalQuery,_rebal.elapsed());
+                    //self.logsys.general_log.write(log::Typ::RebalQuery,_rebal.elapsed());
 
                 }
         
                 {
                     let _upd=kenmisc::Timer2::new();
                     bot::update(bots,bot_prop,border);
-                    self.logsys.general_log.write(log::Typ::BotUpdate,_upd.elapsed());
+                    //self.logsys.general_log.write(log::Typ::BotUpdate,_upd.elapsed());
                 }
             
             
-                self.logsys.general_log.write(log::Typ::Total,_time_all.elapsed());
-                self.logsys.general_log.newline();
+                //self.logsys.general_log.write(log::Typ::Total,_time_all.elapsed());
+                //self.logsys.general_log.newline();
             }
         }
     
@@ -371,7 +371,7 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSystem<A,TDraw> {
         
         let bot_graphics=BotLibGraphics::new(&bot_prop);
         
-        let logsys=LogSystem::new(height);
+        //let logsys=LogSystem::new(height);
         
         
 
@@ -384,7 +384,7 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSystem<A,TDraw> {
             border: world,
             treecache:treecache,
             phantom:PhantomData,
-            logsys
+            //logsys
         }
     }
 }

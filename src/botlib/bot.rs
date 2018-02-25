@@ -119,12 +119,14 @@ impl SweepTrait for BBot{
 
 //Exists so that wraparound can implement a custom bot
 //TODO move to wrap around?
+/*
 pub trait BotTrait{
     fn pos(&self)->&axgeom::Vec2;
     fn vel(&self)->&axgeom::Vec2;
     fn apply_force(&mut self,vec:&axgeom::Vec2);
     fn get_acc(&self)->&axgeom::Vec2;
 }
+*/
 /*
 impl BotTrait for BBot{
     fn pos(&self)->&axgeom::Vec2{
