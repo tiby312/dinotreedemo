@@ -81,13 +81,29 @@ impl WrapAround{
 
 		mm.move_to(&ff);    
 
+
+	    struct Bo{bot_prop:BotProp,mouse:Mouse};
+
+	    impl ColSing for Bo{
+	        type T=BBot;
+	        fn collide(&mut self,mut a:ColSingle<BBot>){
+
+	            bot::collide_mouse(&mut a,&self.bot_prop,&self.mouse);
+	        }
+	    }
+	    let mut bo=Bo{bot_prop:*prop,mouse:*mouse};
+		rects.for_all_in_rect(
+        			&bot::convert_to_nan(*mm.get_rect()),
+                    &mut bo
+		    );
+	    /*
         rects.for_all_in_rect(
         			&bot::convert_to_nan(*mm.get_rect()),
                     &mut |mut cc:ColSingle<BBot>| {
                 //use botlib::bot::BotMovementTrait;
                 bot::collide_mouse(&mut cc,prop,&mm);
 		    });
-		
+		*/
 	}
 	pub fn handle<K:DynTreeTrait<T=BBot,Num=Numf32>>(tree:&mut K,rect:&Rect<f32>,max_prop:&BotProp){
 		
@@ -170,6 +186,7 @@ impl WrapAround{
 		};
 
 
+		/*
 		let mut func=|cc:ColPair<BBot>|{
 			let top_down_length=top_down_length;
 			let top_d_axis=top_d_axis;
@@ -186,6 +203,7 @@ impl WrapAround{
 						
 			
 		};
+		*/
 		//println!("wraparound fix");
 
 		let rect1=bot::convert_to_nan(rect1);
@@ -193,7 +211,34 @@ impl WrapAround{
 		//println!("Rect1={:?}",rect1);
 		//println!("Rect2={:?}",rect2);
 		use dinotree::multirect;
-		multirect::collide_two_rect_parallel::<A::Next,_,_>(rects,&rect1,&rect2,&mut func);
+
+		struct Bo{
+			top_down_length:f32,
+			top_d_axis:axgeom::Axis,
+			prop:BotProp
+		};
+
+		impl ColSeq for Bo{
+			type T=BBot;
+			fn collide(&mut self,cc:ColPair<BBot>){
+				let top_down_length=self.top_down_length;
+				let top_d_axis=self.top_d_axis;
+
+			    //let mut pos=BotTrait::pos(bots_i.0).clone();
+			    let mut copy_botstuff=cc.a.0.clone();
+			    let mut pos=cc.a.0.pos.clone();
+			    *pos.get_axis_mut(top_d_axis)+=top_down_length;
+			    copy_botstuff.pos=pos;
+			     
+			    let cc_copy=ColPair{a:(&copy_botstuff,cc.a.1),b:(cc.b.0,cc.b.1)};
+			    
+			    bot::collide(&self.prop,cc_copy);
+							
+				
+			}
+		}
+		let mut bo=Bo{top_down_length,top_d_axis,prop:*prop};
+		multirect::collide_two_rect_parallel::<A::Next,_,_,_,_>(rects,&rect1,&rect2,&mut bo);
 	}
 	
 }

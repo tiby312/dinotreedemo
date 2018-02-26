@@ -6,9 +6,9 @@ use ordered_float::NotNaN;
 use axgeom::Rect;
 use dinotree::SweepTrait;
 use dinotree::support::Numf32;
-use dinotree::ColFindAdd;
+//use dinotree::ColFindAdd;
 use dinotree::ColPair;
- use dinotree::InnerRect;
+use dinotree::InnerRect;
 use dinotree::ColSingle;
 
 
@@ -42,14 +42,8 @@ impl InnerRect for BotStuff{
 pub struct BotAcc{
     pub acc: axgeom::Vec2
 }
-impl ColFindAdd for BotAcc{
-    fn add(&mut self,b:&BotAcc){
-        self.acc+=b.acc
-    }
-    fn identity()->BotAcc{
-        BotAcc{acc:axgeom::Vec2::new(0.0,0.0)}
-    }
-}
+//impl ColFindAdd for BotAcc{}
+
 
 #[derive(Copy,Clone,Debug)]
 pub struct BBot{

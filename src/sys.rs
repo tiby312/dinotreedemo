@@ -275,13 +275,33 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
 
                         let query=kenmisc::Timer2::new();
 
+                        /*
                         let clos=|cc:ColPair<BBot>|{
                             //use botlib::bot::BotMovementTrait;
 
                             bot::collide(bot_prop,cc);
                         };
+                        */
+                        use botlib::bot::BotAcc;
 
-                        let _v=dyntree.for_every_col_pair::<DefaultDepthLevel,_,treetimer::TreeTimer2>(clos);
+                        #[derive(Copy,Clone)]
+                        struct Bo{bot_prop:BotProp};
+
+                        impl ColMulti for Bo{
+                            type T=BBot;
+
+                            fn identity(&self)->BotAcc{
+                                BotAcc{acc:axgeom::Vec2::new(0.0,0.0)}
+                            }
+                            fn add(&self,a:&mut BotAcc,b:&BotAcc){
+                                 a.acc+=b.acc
+                            }
+                            fn collide(&self,cc:ColPair<Self::T>){
+                                bot::collide(&self.bot_prop,cc);
+                            }
+                        }
+                        let b=Bo{bot_prop:*bot_prop};
+                        let _v=dyntree.for_every_col_pair::<DefaultDepthLevel,_,treetimer::TreeTimer2>(b);
                         //self.logsys.colfind_log.write_data(&_v.into_vec());
             
                         
@@ -393,16 +413,20 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSystem<A,TDraw> {
 
 fn handle_mouse<K:DynTreeTrait<T=BBot,Num=Numf32>>(prop:&BotProp,tree:&mut K,mouse:&Mouse){
     
+    struct Bo{bot_prop:BotProp,mouse:Mouse};
 
-    let mut rect=Rects::new(tree);//tree.create_rects();//Rects::new(tree);
-    rect.for_all_in_rect(&bot::convert_to_nan(*mouse.get_rect()),
-                           &mut |mut cc:ColSingle<BBot>| {
+    impl ColSing for Bo{
+        type T=BBot;
+        fn collide(&mut self,mut a:ColSingle<BBot>){
 
-                        //println!("collide mouse!");
-            //use botlib::bot::BotMovementTrait;
-            bot::collide_mouse(&mut cc,prop,&mouse);
+            bot::collide_mouse(&mut a,&self.bot_prop,&self.mouse);
+        }
+    }
 
-        });
+    let mut rect=Rects::new(tree);
+
+    let mut bo=Bo{bot_prop:*prop,mouse:*mouse};
+    rect.for_all_in_rect(&bot::convert_to_nan(*mouse.get_rect()),&mut bo);
 }
 
 

@@ -195,7 +195,7 @@ mod menu{
             let numberthing={
                 let x=startx as f32-unit*20.0;
                 let y=starty as f32-unit*50.0;
-                NumberThing::new(unit*15.0,unit*2.0,5000,axgeom::Vec2::new(x,y))
+                NumberThing::new(unit*15.0,unit*2.0,6000,axgeom::Vec2::new(x,y))
             };
 
             let col=COLS[0];
