@@ -1,13 +1,10 @@
-
 use axgeom;
-//use botlib::bot::BotTrait;
-//use botlib::bot::Bot;
 use axgeom::Rect;
 use botlib::bot::BotProp;
 
 
 use dinotree::*;
-use dinotree::multirect::Rects;
+use dinotree::Rects;
 use dinotree::support::Numf32;
 
 use botlib::bot::BBot;
@@ -16,46 +13,17 @@ use axgeom::AxisTrait;
 
 use botlib::bot::BotStuff;
 use botlib::bot::BotAcc;
-//use dinotree::multirect::MultiRectTrait;
 
-/*
-struct BotWrapper<'a>{
-	bot_stuff:&'a BotStuff,
-	acc:&'a mut BotAcc,
-	pos:axgeom::Vec2
-}
-
-impl<'a> BotTrait for BotWrapper<'a>{
-
-	fn apply_force(&mut self,vec:&axgeom::Vec2){
-		self.acc.acc+=*vec;//.apply_force(vec);
-	}
-	fn pos(&self)->&axgeom::Vec2{
-		&self.pos
-	}
-
-	fn vel(&self)->&axgeom::Vec2{
-		&self.bot_stuff.vel
-	}
-	fn get_acc(&self)->&axgeom::Vec2{
-		&self.acc.acc
-	}
-}
-*/
 use botlib::mouse::Mouse;
 
 
-
-
-pub struct WrapAround{
-}
+pub struct WrapAround{}
 
 impl WrapAround{
 
-	//pub fn handle_mouse<K:ColTrait<T=BBot>>(prop:&BotProp,tree:&mut K,rect:&Rect<f32>,mouse:&Mouse){
-	pub fn handle_mouse<K:DynTreeTrait<T=BBot,Num=Numf32>>(prop:&BotProp,tree:&mut K,rect:&Rect<f32>,mouse:&Mouse){
+	pub fn handle_mouse(prop:BotProp,tree:&mut DinoTree2<BBot>,rect:&Rect<f32>,mouse:&Mouse){
 
-		let mut rects:Rects<K>=Rects::new(tree);//tree.create_rects();
+		let mut rects:Rects<DinoTree2<BBot>>=Rects::new(tree);
 
 
 		let mut mm=*mouse;
@@ -82,30 +50,29 @@ impl WrapAround{
 		mm.move_to(&ff);    
 
 
+		
+		/*
 	    struct Bo{bot_prop:BotProp,mouse:Mouse};
 
-	    impl ColSing for Bo{
+	    impl<'a> RectsTrait<'a> for Bo{
 	        type T=BBot;
-	        fn collide(&mut self,mut a:ColSingle<BBot>){
+	        fn collide(&mut self,mut a:ColSingle<'a,BBot>){
 
-	            bot::collide_mouse(&mut a,&self.bot_prop,&self.mouse);
 	        }
 	    }
-	    let mut bo=Bo{bot_prop:*prop,mouse:*mouse};
+
+	    let mut bo=Bo{bot_prop:prop,mouse:*mouse};
 		rects.for_all_in_rect(
         			&bot::convert_to_nan(*mm.get_rect()),
                     &mut bo
 		    );
-	    /*
-        rects.for_all_in_rect(
-        			&bot::convert_to_nan(*mm.get_rect()),
-                    &mut |mut cc:ColSingle<BBot>| {
-                //use botlib::bot::BotMovementTrait;
-                bot::collide_mouse(&mut cc,prop,&mm);
-		    });
 		*/
+
+		rects.for_all_in_rect(&bot::convert_to_nan(*mm.get_rect()),
+			&mut |mut a:ColSingle<BBot>|{bot::collide_mouse(&mut a,&prop,mouse);});
+	
 	}
-	pub fn handle<K:DynTreeTrait<T=BBot,Num=Numf32>>(tree:&mut K,rect:&Rect<f32>,max_prop:&BotProp){
+	pub fn handle(tree:&mut DinoTree2<BBot>,rect:&Rect<f32>,max_prop:BotProp){
 		
 
 	    
@@ -127,40 +94,26 @@ impl WrapAround{
 
 		{
         	let mut rects=Rects::new(tree);//tree.create_rects();//Rects::new(tree);
-			Self::handle2::<XAXIS_S,_>(max_prop,&mut rects,width,padding,rect);
+			Self::handle2::<XAXIS_S>(&max_prop,&mut rects,width,padding,rect);
         }
         {
         	let mut rects=Rects::new(tree);//tree.create_rects();//Rects::new(tree);
-        	Self::handle2::<YAXIS_S,_>(max_prop,&mut rects,width,padding,rect);
+        	Self::handle2::<YAXIS_S>(&max_prop,&mut rects,width,padding,rect);
         }
-		/*
-        for axis in axgeom::AxisIter::new(){
-			let mut rects=Rects::new(tree);//tree.create_rects();//Rects::new(tree);
-			
-			Self::handle2(max_prop,&mut rects,width,padding,rect);
-        }
-        */
-
-
-	    
+	
 	}
 
 
 	
 
-	fn handle2<'a,A:AxisTrait,K:DynTreeTrait<T=BBot,Num=Numf32>>(
+	fn handle2<'a,A:AxisTrait>(
 		prop:&BotProp,
-		
-		rects:&mut Rects<K>,
+		rects:&mut Rects<DinoTree2<BBot>>,
 		width:f32,
 		padding:f32,rect:&Rect<f32>){
-		//println!("Rect={:?}",rect);
-		
 
-		let top_d_axis=A::get();//axis;
-		let left_r_axis=A::Next::get();//axis.next();
-		//println!("{:?}",(top_d_axis,left_r_axis));
-
+		let top_d_axis=A::get();
+		let left_r_axis=A::Next::get();
 		let top_down_range=rect.get_range(top_d_axis);
 
 		let top_down_length=rect.get_range(top_d_axis).end-rect.get_range(top_d_axis).start;
@@ -175,7 +128,7 @@ impl WrapAround{
 			*rr.get_range_mut(left_r_axis)=left_right_range;
 			rr
 		};
-		//println!("rect111={:?}",rect1);
+
 		//get bottom rect
 		let rect2={
 			let mut rr=rect.clone();
@@ -185,33 +138,10 @@ impl WrapAround{
 			rr
 		};
 
-
-		/*
-		let mut func=|cc:ColPair<BBot>|{
-			let top_down_length=top_down_length;
-			let top_d_axis=top_d_axis;
-
-		    //let mut pos=BotTrait::pos(bots_i.0).clone();
-		    let mut copy_botstuff=cc.a.0.clone();
-		    let mut pos=cc.a.0.pos.clone();
-		    *pos.get_axis_mut(top_d_axis)+=top_down_length;
-		    copy_botstuff.pos=pos;
-		     
-		    let cc_copy=ColPair{a:(&copy_botstuff,cc.a.1),b:(cc.b.0,cc.b.1)};
-		    
-		    bot::collide(prop,cc_copy);
-						
-			
-		};
-		*/
-		//println!("wraparound fix");
-
 		let rect1=bot::convert_to_nan(rect1);
 		let rect2=bot::convert_to_nan(rect2);
-		//println!("Rect1={:?}",rect1);
-		//println!("Rect2={:?}",rect2);
-		use dinotree::multirect;
 
+		/*
 		struct Bo{
 			top_down_length:f32,
 			top_d_axis:axgeom::Axis,
@@ -224,7 +154,6 @@ impl WrapAround{
 				let top_down_length=self.top_down_length;
 				let top_d_axis=self.top_d_axis;
 
-			    //let mut pos=BotTrait::pos(bots_i.0).clone();
 			    let mut copy_botstuff=cc.a.0.clone();
 			    let mut pos=cc.a.0.pos.clone();
 			    *pos.get_axis_mut(top_d_axis)+=top_down_length;
@@ -233,12 +162,26 @@ impl WrapAround{
 			    let cc_copy=ColPair{a:(&copy_botstuff,cc.a.1),b:(cc.b.0,cc.b.1)};
 			    
 			    bot::collide(&self.prop,cc_copy);
-							
-				
 			}
 		}
 		let mut bo=Bo{top_down_length,top_d_axis,prop:*prop};
 		multirect::collide_two_rect_parallel::<A::Next,_,_,_,_>(rects,&rect1,&rect2,&mut bo);
+		*/
+				//let top_down_length=self.top_down_length;
+				//let top_d_axis=self.top_d_axis;
+
+		let bo=|cc:ColPair<BBot>|{
+			    let mut copy_botstuff=cc.a.0.clone();
+			    let mut pos=cc.a.0.pos.clone();
+			    *pos.get_axis_mut(top_d_axis)+=top_down_length;
+			    copy_botstuff.pos=pos;
+			     
+			    let cc_copy=ColPair{a:(&copy_botstuff,cc.a.1),b:(cc.b.0,cc.b.1)};
+			    
+			    bot::collide(&prop,cc_copy);
+		};
+		collide_two_rect_parallel::<A::Next,_,_,_,_>(rects,&rect1,&rect2,bo);
+		
 	}
 	
 }

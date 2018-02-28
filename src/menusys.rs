@@ -7,7 +7,7 @@ use botlib::bot::BotProp;
 //use sys::BotSysGraphics;
 use botlib::graphics::BotLibGraphics;
 use botlib::mouse::MouseProp;
-use dinotree::TreeCache;
+use dinotree::TreeCache2;
 use dinotree::support::Numf32;
 use axgeom::XAXIS_S;
 //use axgeom::YAXIS_S;
@@ -97,7 +97,7 @@ mod menu{
         bot_prop:BotProp,
         bots: Vec<BBot>,
         border: axgeom::Rect<f32>,
-        treecache:TreeCache<XAXIS_S,Numf32>, 
+        treecache:TreeCache2<Numf32>, 
         dim:(usize,usize),
         buttons:[Button;3],
         color_button:Button,
@@ -195,7 +195,7 @@ mod menu{
             let numberthing={
                 let x=startx as f32-unit*20.0;
                 let y=starty as f32-unit*50.0;
-                NumberThing::new(unit*15.0,unit*2.0,6000,axgeom::Vec2::new(x,y))
+                NumberThing::new(unit*15.0,unit*2.0,60000,axgeom::Vec2::new(x,y))
             };
 
             let col=COLS[0];
@@ -207,7 +207,7 @@ mod menu{
                 bot_prop,
                 bots,
                 border,
-                treecache:TreeCache::new(height),
+                treecache:TreeCache2::new(axgeom::XAXIS,height),
                 dim:(startx,starty),
                 buttons,
                 color_button,

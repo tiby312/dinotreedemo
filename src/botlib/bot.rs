@@ -418,11 +418,11 @@ pub fn create_bots_spaced<X,Y:Fn(&axgeom::Vec2)->X>(world:&axgeom::Rect<f32>,num
 }
 
 
-pub fn update(bots:&mut [BBot],prop:&BotProp,rect:&axgeom::Rect<f32>) {
+pub fn update(bots:&mut [BBot],prop:BotProp,rect:&axgeom::Rect<f32>) {
     //self.last_man.clone_from_slice(&self.man);
 
     for bot in bots.iter_mut() {
-        self::update_bot(bot,prop,rect);
+        self::update_bot(bot,&prop,rect);
     }
 }
 

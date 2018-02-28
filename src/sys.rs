@@ -1,8 +1,8 @@
 use axgeom;
 use botlib::graphics::BotLibGraphics;
 use dinotree::graphics::GenTreeGraphics;
-use dinotree::DinoTree;
-use dinotree::multirect::Rects;
+use dinotree::DinoTree2;
+use dinotree::Rects;
 use dinotree::*;
 use dinotree::tools::par;
 use dinotree::median::*;
@@ -10,12 +10,12 @@ use dinotree::median::relax::*;
 use dinotree::median::strict::*;
 use dinotree::support::Numf32;
 use dinotree;
-use dinotree::DynTreeTrait;
+//use dinotree::DynTreeTrait;
 use axgeom::Rect;
 use wrap_around::WrapAround;
 use botlib::mouse::Mouse;
 //use botlib::bot::Bot;
-
+//use dinotree::multirect::RectsTrait;
 //use simpdraw;
 use std;
 use botlib::bot::BotProp;
@@ -126,7 +126,7 @@ pub fn compute_tree_height(num_bots: usize, radius: f32) -> usize {
 
 pub trait TreeDraw{
     fn get_num_verticies(height:usize)->usize;
-    fn update<A:AxisTrait>(rect:&Rect<f32>,tree:&TreeCache<A,Numf32>,verts:&mut [Vert]);
+    fn update(rect:&Rect<f32>,tree:&TreeCache2<Numf32>,verts:&mut [Vert]);
 }
 
 pub struct TreeDrawReal{
@@ -135,7 +135,7 @@ impl TreeDraw for TreeDrawReal{
     fn get_num_verticies(height:usize)->usize{
         GenTreeGraphics::get_num_verticies(height)
     }
-    fn update<A:AxisTrait>(rect:&Rect<f32>,tree:&TreeCache<A,Numf32>,verts:&mut [Vert]){
+    fn update(rect:&Rect<f32>,tree:&TreeCache2<Numf32>,verts:&mut [Vert]){
         
         #[derive(Clone,Default,Copy)]
         struct Bo(Vert);
@@ -156,7 +156,7 @@ impl TreeDraw for TreeNoDraw{
     fn get_num_verticies(_height:usize)->usize{
         0
     }
-    fn update<A:AxisTrait>(_rect:&Rect<f32>,_tree:&TreeCache<A,Numf32>,_verts:&mut [Vert]){
+    fn update(_rect:&Rect<f32>,_tree:&TreeCache2<Numf32>,_verts:&mut [Vert]){
     }
 }
 
@@ -195,15 +195,14 @@ impl LogSystem{
 
 
 
-pub struct BotSystem<A:AxisTrait,TDraw:TreeDraw> {
+pub struct BotSystem<TDraw:TreeDraw> {
     bot_graphics:BotLibGraphics,
     mouse_prop:MouseProp,
     bots: Vec<BBot>,
     bot_prop:BotProp,
     border: axgeom::Rect<f32>,
-    treecache:TreeCache<A,Numf32>,
+    treecache:TreeCache2<Numf32>,
     phantom:PhantomData<TDraw>,
-    //logsys:LogSystem
 }
 
 
@@ -213,7 +212,7 @@ pub trait BotSysTrait{
     fn step(&mut self, poses: &[axgeom::Vec2]);
 }
 
-impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
+impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
 
     fn get_num_verticies(&self)->usize{
         let height = compute_tree_height(self.bots.len(), self.bot_prop.radius.radius());
@@ -234,7 +233,7 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
         {                
             let border=&self.border;
             let mouse_prop=&self.mouse_prop;
-            let bot_prop=&self.bot_prop;
+            let bot_prop=self.bot_prop;
             let treecache=&mut self.treecache;
 
             {
@@ -258,7 +257,7 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
                     
                     let bb=MedianRelax::new(B(self.bot_prop.radius.radius()));
                                                                                                         //TreeTimer2
-                    let (mut dyntree,_bag)=DinoTree::new::<par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
+                    let (mut dyntree,_bag)=DinoTree2::new::<par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
                         (bots,treecache,&bb);
                     
                     //self.logsys.rebal_log.write_data(&_bag.into_vec());
@@ -284,6 +283,8 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
                         */
                         use botlib::bot::BotAcc;
 
+                        
+                        /*
                         #[derive(Copy,Clone)]
                         struct Bo{bot_prop:BotProp};
 
@@ -300,13 +301,23 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSysTrait for BotSystem<A,TDraw>{
                                 bot::collide(&self.bot_prop,cc);
                             }
                         }
-                        let b=Bo{bot_prop:*bot_prop};
+                        let b=Bo{bot_prop:bot_prop};
+                        
+
                         let _v=dyntree.for_every_col_pair::<DefaultDepthLevel,_,treetimer::TreeTimer2>(b);
-                        //self.logsys.colfind_log.write_data(&_v.into_vec());
-            
-                        
-                        //self.logsys.general_log.write(log::Typ::Query,query.elapsed());
-                        
+                        */
+
+                        let a=|cc:ColPair<BBot>|{
+                            bot::collide(&bot_prop,cc);
+                        };
+                        let b=||{
+                            BotAcc{acc:axgeom::Vec2::new(0.0,0.0)}
+                        };
+                        let c=|a:&mut BotAcc,b:&BotAcc|{
+                            a.acc+=b.acc;
+                        };
+                        let _v=dyntree.for_every_col_pair::<_,_,_,DefaultDepthLevel,treetimer::TreeTimer2>(a,b,c);
+                    
 
                         WrapAround::handle(&mut dyntree,border,bot_prop);   
 
@@ -345,30 +356,19 @@ pub fn new(num_bots:usize,startx:usize,starty:usize,draw_tree:bool)->Box<BotSysT
     use axgeom::XAXIS_S;
     use axgeom::YAXIS_S;
 
-    
-    if startx>=starty{
-        if draw_tree{
-            let k=BotSystem::<XAXIS_S,TreeDrawReal>::new_inner(num_bots,startx,starty);
-            Box::<BotSystem<XAXIS_S,TreeDrawReal>>::new(k)
-        }else{
-            let k=BotSystem::<XAXIS_S,TreeNoDraw>::new_inner(num_bots,startx,starty);
-            Box::<BotSystem<XAXIS_S,TreeNoDraw>>::new(k)
-        }
+    if draw_tree{
+        let k=BotSystem::<TreeDrawReal>::new_inner(num_bots,startx,starty);
+        Box::new(k)
     }else{
-        if draw_tree{
-            let k=BotSystem::<YAXIS_S,TreeDrawReal>::new_inner(num_bots,startx,starty);
-            Box::<BotSystem<YAXIS_S,TreeDrawReal>>::new(k)
-        }else{
-            let k=BotSystem::<YAXIS_S,TreeNoDraw>::new_inner(num_bots,startx,starty);
-            Box::<BotSystem<YAXIS_S,TreeNoDraw>>::new(k)
-        }
+        let k=BotSystem::<TreeNoDraw>::new_inner(num_bots,startx,starty);
+        Box::new(k)
     }
 }
 
-impl<A:AxisTrait,TDraw:TreeDraw> BotSystem<A,TDraw> {
+impl<TDraw:TreeDraw> BotSystem<TDraw> {
 
     
-    fn new_inner(num_bots:usize,startx:usize,starty:usize) -> BotSystem<A,TDraw> {
+    fn new_inner(num_bots:usize,startx:usize,starty:usize) -> BotSystem<TDraw> {
         let world= axgeom::Rect::new(0.0,startx as f32,0.0,starty as f32);
     
         let br=bot::compute_bot_radius(num_bots,&world).unwrap();
@@ -381,11 +381,18 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSystem<A,TDraw> {
         //TODO should it be based on max prop or average prop
         let height = compute_tree_height(bots.len(), bot_prop.radius.radius());
 
-        let mut treecache=TreeCache::new(height);
+        let axis=if startx>starty{
+            axgeom::XAXIS
+        }else{
+            axgeom::YAXIS
+        };
+        let mut treecache=TreeCache2::new(axis,height);
+
+        
 
         {         
             let k=MedianStrict::<Numf32>::new();
-            let (_dyntree,_bag)=DinoTree::new::<par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
+            let (_dyntree,_bag)=DinoTree2::new::<par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
                     (&mut bots,&mut treecache,&k);
         }
         
@@ -411,22 +418,14 @@ impl<A:AxisTrait,TDraw:TreeDraw> BotSystem<A,TDraw> {
 
 
 
-fn handle_mouse<K:DynTreeTrait<T=BBot,Num=Numf32>>(prop:&BotProp,tree:&mut K,mouse:&Mouse){
-    
-    struct Bo{bot_prop:BotProp,mouse:Mouse};
-
-    impl ColSing for Bo{
-        type T=BBot;
-        fn collide(&mut self,mut a:ColSingle<BBot>){
-
-            bot::collide_mouse(&mut a,&self.bot_prop,&self.mouse);
-        }
-    }
-
+fn handle_mouse(prop:BotProp,tree:&mut DinoTree2<BBot>,mouse:&Mouse){
+      
     let mut rect=Rects::new(tree);
 
-    let mut bo=Bo{bot_prop:*prop,mouse:*mouse};
-    rect.for_all_in_rect(&bot::convert_to_nan(*mouse.get_rect()),&mut bo);
+    rect.for_all_in_rect(&bot::convert_to_nan(*mouse.get_rect()),&mut |mut a:ColSingle<BBot>|{
+        bot::collide_mouse(&mut a,&prop,mouse);
+    });
+
 }
 
 
