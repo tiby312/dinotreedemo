@@ -249,8 +249,8 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                     
                     let bb=MedianRelax::new(B(self.bot_prop.radius.radius()));
                                                                                                         //TreeTimer2
-                    let (mut dyntree,_bag)=DinoTree2::new::<par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
-                        (bots,treecache,&bb);
+                    let (mut dyntree,_bag)=treecache.new_tree::<_,par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
+                        (bots,&bb);
                     
                     //self.logsys.rebal_log.write_data(&_bag.into_vec());
 
@@ -384,8 +384,8 @@ impl<TDraw:TreeDraw> BotSystem<TDraw> {
 
         {         
             let k=MedianStrict::<Numf32>::new();
-            let (_dyntree,_bag)=DinoTree2::new::<par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
-                    (&mut bots,&mut treecache,&k);
+            let (_dyntree,_bag)=treecache.new_tree::<_,par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
+                    (&mut bots,&k);
         }
         
         let bot_graphics=BotLibGraphics::new(&bot_prop);
