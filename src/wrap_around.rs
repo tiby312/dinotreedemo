@@ -23,9 +23,6 @@ impl WrapAround{
 
 	pub fn handle_mouse(prop:BotProp,tree:&mut DinoTree2<BBot>,rect:&Rect<f32>,mouse:&Mouse){
 
-		let mut rects:Rects<DinoTree2<BBot>>=Rects::new(tree);
-
-
 		let mut mm=*mouse;
 		
 		let mut flipp=false;
@@ -49,26 +46,7 @@ impl WrapAround{
 
 		mm.move_to(&ff);    
 
-
-		
-		/*
-	    struct Bo{bot_prop:BotProp,mouse:Mouse};
-
-	    impl<'a> RectsTrait<'a> for Bo{
-	        type T=BBot;
-	        fn collide(&mut self,mut a:ColSingle<'a,BBot>){
-
-	        }
-	    }
-
-	    let mut bo=Bo{bot_prop:prop,mouse:*mouse};
-		rects.for_all_in_rect(
-        			&bot::convert_to_nan(*mm.get_rect()),
-                    &mut bo
-		    );
-		*/
-
-		rects.for_all_in_rect(&bot::convert_to_nan(*mm.get_rect()),
+		tree.rects().for_all_in_rect(&bot::convert_to_nan(*mm.get_rect()),
 			&mut |mut a:ColSingle<BBot>|{bot::collide_mouse(&mut a,&prop,mouse);});
 	
 	}
@@ -93,11 +71,11 @@ impl WrapAround{
 		use axgeom::YAXIS_S;
 
 		{
-        	let mut rects=Rects::new(tree);//tree.create_rects();//Rects::new(tree);
+        	let mut rects=tree.rects();
 			Self::handle2::<XAXIS_S>(&max_prop,&mut rects,width,padding,rect);
         }
         {
-        	let mut rects=Rects::new(tree);//tree.create_rects();//Rects::new(tree);
+        	let mut rects=tree.rects();
         	Self::handle2::<YAXIS_S>(&max_prop,&mut rects,width,padding,rect);
         }
 	
@@ -140,35 +118,6 @@ impl WrapAround{
 
 		let rect1=bot::convert_to_nan(rect1);
 		let rect2=bot::convert_to_nan(rect2);
-
-		/*
-		struct Bo{
-			top_down_length:f32,
-			top_d_axis:axgeom::Axis,
-			prop:BotProp
-		};
-
-		impl ColSeq for Bo{
-			type T=BBot;
-			fn collide(&mut self,cc:ColPair<BBot>){
-				let top_down_length=self.top_down_length;
-				let top_d_axis=self.top_d_axis;
-
-			    let mut copy_botstuff=cc.a.0.clone();
-			    let mut pos=cc.a.0.pos.clone();
-			    *pos.get_axis_mut(top_d_axis)+=top_down_length;
-			    copy_botstuff.pos=pos;
-			     
-			    let cc_copy=ColPair{a:(&copy_botstuff,cc.a.1),b:(cc.b.0,cc.b.1)};
-			    
-			    bot::collide(&self.prop,cc_copy);
-			}
-		}
-		let mut bo=Bo{top_down_length,top_d_axis,prop:*prop};
-		multirect::collide_two_rect_parallel::<A::Next,_,_,_,_>(rects,&rect1,&rect2,&mut bo);
-		*/
-				//let top_down_length=self.top_down_length;
-				//let top_d_axis=self.top_d_axis;
 
 		let bo=|cc:ColPair<BBot>|{
 			    let mut copy_botstuff=cc.a.0.clone();

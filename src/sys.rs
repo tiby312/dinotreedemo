@@ -1,22 +1,14 @@
 use axgeom;
 use botlib::graphics::BotLibGraphics;
-use dinotree::graphics::GenTreeGraphics;
-use dinotree::DinoTree2;
-use dinotree::Rects;
-use dinotree::*;
-use dinotree::tools::par;
-use dinotree::median::*;
-use dinotree::median::relax::*;
-use dinotree::median::strict::*;
-use dinotree::support::Numf32;
+
 use dinotree;
-//use dinotree::DynTreeTrait;
+use dinotree::prelude::*;
+use dinotree::support::Numf32;
+
 use axgeom::Rect;
 use wrap_around::WrapAround;
 use botlib::mouse::Mouse;
-//use botlib::bot::Bot;
-//use dinotree::multirect::RectsTrait;
-//use simpdraw;
+
 use std;
 use botlib::bot::BotProp;
 use botlib::mouse::MouseProp;
@@ -420,9 +412,10 @@ impl<TDraw:TreeDraw> BotSystem<TDraw> {
 
 fn handle_mouse(prop:BotProp,tree:&mut DinoTree2<BBot>,mouse:&Mouse){
       
-    let mut rect=Rects::new(tree);
+    //let mut rect=Rects::new(tree);
+    //let rect=tree.rects();
 
-    rect.for_all_in_rect(&bot::convert_to_nan(*mouse.get_rect()),&mut |mut a:ColSingle<BBot>|{
+    tree.rects().for_all_in_rect(&bot::convert_to_nan(*mouse.get_rect()),&mut |mut a:ColSingle<BBot>|{
         bot::collide_mouse(&mut a,&prop,mouse);
     });
 
