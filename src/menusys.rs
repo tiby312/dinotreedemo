@@ -277,7 +277,7 @@ mod menu{
                 //let steps=bb.steps_taken();
             
                 for b in bb{
-                    b.stuff.pos=axgeom::Vec2::new(-100.0,-100.0);
+                    b.inner.pos=axgeom::Vec2::new(-100.0,-100.0);
                     b.update_box(&0.0);
                 }
 

@@ -18,7 +18,7 @@ use kenmisc;
 use dinotree::support::DefaultDepthLevel;
 use axgeom::AxisTrait;
 use botlib::bot::BBot;
-
+ use botlib::bot::Bot;
 use Vert;
 pub mod log2{
 
@@ -125,7 +125,7 @@ pub struct TreeDrawReal{
 }
 impl TreeDraw for TreeDrawReal{
     fn get_num_verticies(height:usize)->usize{
-        GenTreeGraphics::get_num_verticies(height)
+        dinotree::graphics::get_num_verticies(height)
     }
     fn update(rect:&Rect<f32>,tree:&TreeCache2<Numf32>,verts:&mut [Vert]){
         
@@ -139,7 +139,7 @@ impl TreeDraw for TreeDrawReal{
         }
 
         let k:&mut [Bo]=unsafe{std::mem::transmute(verts)};
-        GenTreeGraphics::update(bot::convert_to_nan(*rect),tree,k,10.0);
+        dinotree::graphics::update(bot::convert_to_nan(*rect),tree,k,10.0);
     }
 }
 pub struct TreeNoDraw{
@@ -273,7 +273,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                             bot::collide(bot_prop,cc);
                         };
                         */
-                        use botlib::bot::BotAcc;
+                        //use botlib::bot::BotAcc;
 
                         
                         /*
@@ -302,10 +302,10 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                         let a=|cc:ColPair<BBot>|{
                             bot::collide(&bot_prop,cc);
                         };
-                        let b=||{
-                            BotAcc{acc:axgeom::Vec2::new(0.0,0.0)}
+                        let b=|a:&mut Bot|{
+                            a.acc=axgeom::Vec2::new(0.0,0.0);
                         };
-                        let c=|a:&mut BotAcc,b:&BotAcc|{
+                        let c=|a:&mut Bot,b:&Bot|{
                             a.acc+=b.acc;
                         };
                         let _v=dyntree.for_every_col_pair::<_,_,_,DefaultDepthLevel,treetimer::TreeTimer2>(a,b,c);
@@ -381,12 +381,13 @@ impl<TDraw:TreeDraw> BotSystem<TDraw> {
         let mut treecache=TreeCache2::new(axis,height);
 
         
-
+        
         {         
             let k=MedianStrict::<Numf32>::new();
             let (_dyntree,_bag)=treecache.new_tree::<_,par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
                     (&mut bots,&k);
         }
+        
         
         let bot_graphics=BotLibGraphics::new(&bot_prop);
         

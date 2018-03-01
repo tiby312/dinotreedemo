@@ -4,12 +4,10 @@ use botlib::mouse::MouseProp;
 use super::mouse::Mouse;
 use ordered_float::NotNaN;
 use axgeom::Rect;
-use dinotree::SweepTrait;
+
+
+use dinotree::prelude::*;
 use dinotree::support::Numf32;
-//use dinotree::ColFindAdd;
-use dinotree::ColPair;
-use dinotree::InnerRect;
-use dinotree::ColSingle;
 
 
 
@@ -23,61 +21,41 @@ pub struct BotProp {
 }
 
 
-#[derive(Copy,Clone,Debug)]
-pub struct BotStuff{
-    rect:axgeom::Rect<Numf32>,
-    pub pos: axgeom::Vec2,
-    pub vel: axgeom::Vec2,
-}
-
-impl InnerRect for BotStuff{
-    type Num=Numf32;
-    fn get(&self)->&axgeom::Rect<Numf32>{
-        &self.rect
-    }
-}
-
-
-#[derive(Copy,Clone,Debug)]
-pub struct BotAcc{
-    pub acc: axgeom::Vec2
-}
-//impl ColFindAdd for BotAcc{}
 
 
 #[derive(Copy,Clone,Debug)]
 pub struct BBot{
-    pub stuff:BotStuff,
-    pub val:BotAcc
+    pub rect:axgeom::Rect<Numf32>,
+    pub inner:Bot
 }
+
+#[derive(Copy,Clone,Debug)]
+pub struct Bot{
+    pub pos: axgeom::Vec2,
+    pub vel: axgeom::Vec2,
+    pub acc: axgeom::Vec2
+}
+
 impl BBot{
     fn new(posa:&axgeom::Vec2,rect:axgeom::Rect<Numf32>)->BBot{
         let pos=*posa;
         let vel=axgeom::Vec2::new(0.0,0.0);
-        let bs=BotStuff{rect,pos:*posa,vel};
-        let val=BotAcc{acc:axgeom::Vec2::new(0.0,0.0)};
-        //let r= axgeom::Rect::from_pos_and_radius(&pos,prop.radius.radius());   
-        BBot{stuff:bs,val:val}
+        let acc=vel;
+        BBot{inner:Bot{pos,vel,acc},rect}
     }
     fn pos(&self)->&axgeom::Vec2{
-        &self.stuff.pos
+        &self.inner.pos
     }
     fn vel(&self)->&axgeom::Vec2{
-        &self.stuff.vel
+        &self.inner.vel
     }
-    /*
-    fn apply_force(&mut self,vec:&axgeom::Vec2){
-        self.acc+=*vec;
-    
-    }
-    */
     fn get_acc(&self)->&axgeom::Vec2{
-        &self.val.acc
+        &self.inner.acc
     }
     pub fn update_box(&mut self,radius:&f32){
-        let r:Rect<f32>=Rect::from_pos_and_radius(&self.stuff.pos,*radius);
+        let r:Rect<f32>=Rect::from_pos_and_radius(&self.inner.pos,*radius);
         
-        self.stuff.rect=convert_to_nan(r);
+        self.rect=convert_to_nan(r);
     }
 }
 
@@ -96,18 +74,17 @@ pub fn convert_to_nan(r:Rect<f32>)->Rect<Numf32>{
 }
 
 impl SweepTrait for BBot{
-    type InnerRect=BotStuff;
-    type Inner=BotAcc;
+    type Inner=Bot;
     type Num=Numf32;
 
     ///Destructure into the bounding box and mutable parts.
-    fn get_mut<'a>(&'a mut self)->(&'a Self::InnerRect,&'a mut Self::Inner){
-        (&self.stuff,&mut self.val)
+    fn get_mut<'a>(&'a mut self)->(&'a Rect<Numf32>,&'a mut Self::Inner){
+        (&self.rect,&mut self.inner)
     }
 
     ///Destructue into the bounding box and inner part.
-    fn get<'a>(&'a self)->(&'a Self::InnerRect,&'a Self::Inner){
-        (&self.stuff,&self.val)
+    fn get<'a>(&'a self)->(&'a Rect<Numf32>,&'a Self::Inner){
+        (&self.rect,&self.inner)
     }
 }
 
@@ -152,11 +129,11 @@ pub trait BotMovementTrait{
 
 pub fn collide(prop:&BotProp,cc:ColPair<BBot>){
    
-    let bots=[cc.a.0,cc.b.0];
+    let bots=[cc.a.1,cc.b.1];
 
 
 
-    let vals=[cc.a.1,cc.b.1];
+    //let vals=[cc.a.1,cc.b.1];
 
 
 
@@ -174,8 +151,8 @@ pub fn collide(prop:&BotProp,cc:ColPair<BBot>){
     //if directly ontop of each other
     if dis_sqr < prop.minimum_dis_sqr {
         let vec=axgeom::Vec2::new(prop.max_acc,0.0); //TODO dont hardcode. and test
-        vals[0].acc+=vec;//apply_force(&vec);
-        vals[1].acc+=-vec;//.apply_force(&-vec);
+        bots[0].acc+=vec;//apply_force(&vec);
+        bots[1].acc+=-vec;//.apply_force(&-vec);
         return;
     }
 
@@ -225,8 +202,8 @@ pub fn collide(prop:&BotProp,cc:ColPair<BBot>){
         (drag_force[1] - push_force)
     ];
     
-    vals[0].acc+=acc[0];//.apply_force(&acc[0]);
-    vals[1].acc+=acc[1];//bots[1].apply_force(&acc[1]);
+    bots[0].acc+=acc[0];//.apply_force(&acc[0]);
+    bots[1].acc+=acc[1];//bots[1].apply_force(&acc[1]);
 }
 
 
@@ -239,15 +216,15 @@ pub fn update_bot(bot:&mut BBot,prop:&BotProp,rect:&axgeom::Rect<f32>) {
             let a=rect.get_range(j).start;
             let b=rect.get_range(j).end;
 
-            let mut new_pos=bot.stuff.pos.clone();
+            let mut new_pos=bot.inner.pos.clone();
 
-            if *bot.stuff.pos.get_axis(j) < a {
+            if *bot.inner.pos.get_axis(j) < a {
                 *new_pos.get_axis_mut(j) = b;
             }
-            if *bot.stuff.pos.get_axis(j) > b {
+            if *bot.inner.pos.get_axis(j) > b {
                 *new_pos.get_axis_mut(j) = a;
             }
-            bot.stuff.pos=new_pos;
+            bot.inner.pos=new_pos;
         }
 
         //if velocity is nan, just set it to zero and conitnue. so we dont pollute the position to also be nan.
@@ -257,23 +234,23 @@ pub fn update_bot(bot:&mut BBot,prop:&BotProp,rect:&axgeom::Rect<f32>) {
         }
         */
 
-        let acc_sqr=bot.val.acc.len_sqr();
+        let acc_sqr=bot.inner.acc.len_sqr();
         if acc_sqr>=prop.max_acc.powi(2){
-            bot.val.acc=bot.val.acc*(prop.max_acc/acc_sqr);
+            bot.inner.acc=bot.inner.acc*(prop.max_acc/acc_sqr);
         }
         
         {
-            let mut kk=bot.stuff.vel;
-            kk+=bot.val.acc;
-            bot.stuff.vel=kk;    
+            let mut kk=bot.inner.vel;
+            kk+=bot.inner.acc;
+            bot.inner.vel=kk;    
         }
         {
-            let mut kk=bot.stuff.pos;
-            kk+=bot.stuff.vel;
-            bot.stuff.pos=kk;
+            let mut kk=bot.inner.pos;
+            kk+=bot.inner.vel;
+            bot.inner.pos=kk;
         }
 
-        bot.val.acc.set(0.0,0.0);
+        bot.inner.acc.set(0.0,0.0);
    
     }
     //TODO inefficient?
@@ -286,7 +263,7 @@ pub fn collide_mouse(bot:&mut ColSingle<BBot>,prop:&BotProp,mouse:&Mouse){
     //let stuff=bot.0;
     //let val=bot.1;
 
-    let offset = *mouse.get_midpoint() - bot.0.pos;
+    let offset = *mouse.get_midpoint() - bot.1.pos;
     let dis_sqr = offset.len_sqr();
     
     if dis_sqr < (mouse.get_radius() + prop.radius.radius()).powi(2) {

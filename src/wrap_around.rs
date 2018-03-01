@@ -6,13 +6,11 @@ use botlib::bot::BotProp;
 use dinotree::*;
 use dinotree::Rects;
 use dinotree::support::Numf32;
+use dinotree::support;
 
 use botlib::bot::BBot;
 use botlib::bot;
 use axgeom::AxisTrait;
-
-use botlib::bot::BotStuff;
-use botlib::bot::BotAcc;
 
 use botlib::mouse::Mouse;
 
@@ -120,16 +118,16 @@ impl WrapAround{
 		let rect2=bot::convert_to_nan(rect2);
 
 		let bo=|cc:ColPair<BBot>|{
-			    let mut copy_botstuff=cc.a.0.clone();
-			    let mut pos=cc.a.0.pos.clone();
+			    let mut copy_botstuff=cc.a.1.clone();
+			    let mut pos=cc.a.1.pos.clone();
 			    *pos.get_axis_mut(top_d_axis)+=top_down_length;
 			    copy_botstuff.pos=pos;
 			     
-			    let cc_copy=ColPair{a:(&copy_botstuff,cc.a.1),b:(cc.b.0,cc.b.1)};
+			    let cc_copy=ColPair{a:(cc.a.0,&mut copy_botstuff),b:(cc.b.0,cc.b.1)};
 			    
 			    bot::collide(&prop,cc_copy);
 		};
-		collide_two_rect_parallel::<A::Next,_,_,_,_>(rects,&rect1,&rect2,bo);
+		support::collide_two_rect_parallel::<A::Next,_,_,_,_>(rects,&rect1,&rect2,bo);
 		
 	}
 	

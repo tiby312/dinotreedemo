@@ -1,10 +1,6 @@
 use axgeom;
-//use botlib::bot::BotTrait;
 use botlib::bot::BotProp;
-
-//use simpdraw::Vertex;
 use botlib::bot::BBot;
-//use botlib::bot::Bot;
 use Vert;
 
 pub struct BotLibGraphics{
@@ -61,7 +57,7 @@ impl BotLibGraphics{
         };
         */
                 
-        let pos=&bot.stuff.pos;
+        let pos=&bot.inner.pos;
         let p1 = *pos + self.p1;//.rotate_by(velnorm);
         let p2 = *pos + self.p2;//.rotate_by(velnorm);
         let p3 = *pos + self.p3;//.rotate_by(velnorm);
