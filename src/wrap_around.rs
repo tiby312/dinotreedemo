@@ -11,6 +11,7 @@ use dinotree::support;
 use botlib::bot::BBot;
 use botlib::bot;
 use axgeom::AxisTrait;
+use botlib::bot::convert_aabbox;
 
 use botlib::mouse::Mouse;
 
@@ -44,7 +45,7 @@ impl WrapAround{
 
 		mm.move_to(&ff);    
 
-		tree.rects().for_all_in_rect(&bot::convert_to_nan(*mm.get_rect()),
+		tree.rects().for_all_in_rect(&convert_aabbox(bot::convert_to_nan(*mm.get_rect())),
 			&mut |mut a:ColSingle<BBot>|{bot::collide_mouse(&mut a,&prop,mouse);});
 	
 	}
@@ -69,12 +70,12 @@ impl WrapAround{
 		use axgeom::YAXIS_S;
 
 		{
-        	let mut rects=tree.rects();
-			Self::handle2::<XAXIS_S>(&max_prop,&mut rects,width,padding,rect);
+        	//let mut rects=tree.rects();
+			Self::handle2::<XAXIS_S>(&max_prop,tree,width,padding,rect);
         }
         {
-        	let mut rects=tree.rects();
-        	Self::handle2::<YAXIS_S>(&max_prop,&mut rects,width,padding,rect);
+        	//let mut rects=tree.rects();
+        	Self::handle2::<YAXIS_S>(&max_prop,tree,width,padding,rect);
         }
 	
 	}
@@ -82,9 +83,9 @@ impl WrapAround{
 
 	
 
-	fn handle2<'a,A:AxisTrait>(
+	fn handle2<A:AxisTrait>(
 		prop:&BotProp,
-		rects:&mut Rects<DinoTree2<BBot>>,
+		tree:&mut DinoTree2<BBot>,
 		width:f32,
 		padding:f32,rect:&Rect<f32>){
 
@@ -114,8 +115,8 @@ impl WrapAround{
 			rr
 		};
 
-		let rect1=bot::convert_to_nan(rect1);
-		let rect2=bot::convert_to_nan(rect2);
+		let rect1=convert_aabbox(bot::convert_to_nan(rect1));
+		let rect2=convert_aabbox(bot::convert_to_nan(rect2));
 
 		let bo=|cc:ColPair<BBot>|{
 			    let mut copy_botstuff=cc.a.1.clone();
@@ -127,7 +128,7 @@ impl WrapAround{
 			    
 			    bot::collide(&prop,cc_copy);
 		};
-		support::collide_two_rect_parallel::<A::Next,_,_,_,_>(rects,&rect1,&rect2,bo);
+		support::collide_two_rect_parallel::<A::Next,_,_,_>(tree,&rect1,&rect2,bo);
 		
 	}
 	

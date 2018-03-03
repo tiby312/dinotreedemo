@@ -25,7 +25,7 @@ pub struct BotProp {
 
 #[derive(Copy,Clone,Debug)]
 pub struct BBot{
-    pub rect:axgeom::Rect<Numf32>,
+    pub rect:AABBox<Numf32>,
     pub inner:Bot
 }
 
@@ -37,7 +37,7 @@ pub struct Bot{
 }
 
 impl BBot{
-    fn new(posa:&axgeom::Vec2,rect:axgeom::Rect<Numf32>)->BBot{
+    fn new(posa:&axgeom::Vec2,rect:AABBox<Numf32>)->BBot{
         let pos=*posa;
         let vel=axgeom::Vec2::new(0.0,0.0);
         let acc=vel;
@@ -55,14 +55,21 @@ impl BBot{
     pub fn update_box(&mut self,radius:&f32){
         let r:Rect<f32>=Rect::from_pos_and_radius(&self.inner.pos,*radius);
         
-        self.rect=convert_to_nan(r);
+        self.rect=convert_aabbox(convert_to_nan(r));
     }
 }
 
+pub fn convert_aabbox(r:Rect<Numf32>)->AABBox<Numf32>{
+
+    let a=r.get_range2::<axgeom::XAXIS_S>();
+    let b=r.get_range2::<axgeom::YAXIS_S>();
+    
+    AABBox::new((a.start,a.end),(b.start,b.end))
+}
 pub fn convert_to_nan(r:Rect<f32>)->Rect<Numf32>{
 
-    let a=r.get_range(axgeom::XAXIS);
-    let b=r.get_range(axgeom::YAXIS);
+    let a=r.get_range2::<axgeom::XAXIS_S>();
+    let b=r.get_range2::<axgeom::YAXIS_S>();
     
     let rect=Rect::new(
         Numf32(NotNaN::new(a.start).unwrap()),
@@ -78,12 +85,12 @@ impl SweepTrait for BBot{
     type Num=Numf32;
 
     ///Destructure into the bounding box and mutable parts.
-    fn get_mut<'a>(&'a mut self)->(&'a Rect<Numf32>,&'a mut Self::Inner){
+    fn get_mut<'a>(&'a mut self)->(&'a AABBox<Numf32>,&'a mut Self::Inner){
         (&self.rect,&mut self.inner)
     }
 
     ///Destructue into the bounding box and inner part.
-    fn get<'a>(&'a self)->(&'a Rect<Numf32>,&'a Self::Inner){
+    fn get<'a>(&'a self)->(&'a AABBox<Numf32>,&'a Self::Inner){
         (&self.rect,&self.inner)
     }
 }
@@ -411,7 +418,7 @@ pub fn create_bots(num_bot:usize, world:&axgeom::Rect<f32>, bot_prop: &BotProp)-
         create_bots_spaced(world,num_bot,bot_prop.radius.radius2(),|vec:&axgeom::Vec2|{
             
             let r=axgeom::Rect::from_pos_and_radius(vec,pp.radius.radius());   
-            BBot::new(vec,convert_to_nan(r))
+            BBot::new(vec,convert_aabbox(convert_to_nan(r)))
             //BBot{val:b,rect:convert_to_nan(r)}
             //BBot::new(b,r)
         })

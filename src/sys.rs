@@ -18,8 +18,11 @@ use kenmisc;
 use dinotree::support::DefaultDepthLevel;
 use axgeom::AxisTrait;
 use botlib::bot::BBot;
- use botlib::bot::Bot;
+use botlib::bot::Bot;
 use Vert;
+use botlib::bot::convert_aabbox;
+
+
 pub mod log2{
 
     
@@ -302,10 +305,12 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                         let a=|cc:ColPair<BBot>|{
                             bot::collide(&bot_prop,cc);
                         };
-                        let b=|a:&mut Bot|{
-                            a.acc=axgeom::Vec2::new(0.0,0.0);
+                        let b=|a:&BBot|->BBot{
+                            let mut b=a.clone();
+                            b.inner.acc=axgeom::Vec2::new(0.0,0.0);
+                            b
                         };
-                        let c=|a:&mut Bot,b:&Bot|{
+                        let c=|a:&mut Bot,b:&mut Bot|{
                             a.acc+=b.acc;
                         };
                         let _v=dyntree.for_every_col_pair::<_,_,_,DefaultDepthLevel,treetimer::TreeTimer2>(a,b,c);
@@ -416,7 +421,7 @@ fn handle_mouse(prop:BotProp,tree:&mut DinoTree2<BBot>,mouse:&Mouse){
     //let mut rect=Rects::new(tree);
     //let rect=tree.rects();
 
-    tree.rects().for_all_in_rect(&bot::convert_to_nan(*mouse.get_rect()),&mut |mut a:ColSingle<BBot>|{
+    tree.rects().for_all_in_rect(&convert_aabbox(bot::convert_to_nan(*mouse.get_rect())),&mut |mut a:ColSingle<BBot>|{
         bot::collide_mouse(&mut a,&prop,mouse);
     });
 
