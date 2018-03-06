@@ -7,7 +7,7 @@ use botlib::bot::BotProp;
 //use sys::BotSysGraphics;
 use botlib::graphics::BotLibGraphics;
 use botlib::mouse::MouseProp;
-use dinotree::TreeCache2;
+//use dinotree::TreeCache2;
 use dinotree::support::Numf32;
 use axgeom::XAXIS_S;
 //use axgeom::YAXIS_S;
@@ -48,13 +48,15 @@ impl<I: Iterator> Iterator for IteratorCounter<I> {
 struct GameState(Box<BotSysTrait>);
 
 impl MenuState for GameState{
-    fn step(&mut self, poses: &[axgeom::Vec2])->(Option<Box<MenuState>>,(Option<[f32;3]>,bool)){
-        self.0.step(poses);
+    fn step(&mut self, poses: &[axgeom::Vec2],a:&mut [Vert])->(Option<Box<MenuState>>,(Option<[f32;3]>,bool)){
+        self.0.step(poses,a);
         (None,(None,true))
     }    
+    /*
     fn get_verticies(&self,a:&mut [Vert]){
         self.0.get_verticies(a)
     }
+    */
     fn num_verticies(&self)->usize{
         self.0.get_num_verticies()
     }
@@ -63,8 +65,8 @@ impl MenuState for GameState{
 }
 
 trait MenuState{
-    fn step(&mut self, poses: &[axgeom::Vec2])->(Option<Box<MenuState>>,(Option<[f32;3]>,bool));
-    fn get_verticies(&self,v:&mut [Vert]); 
+    fn step(&mut self, poses: &[axgeom::Vec2],v:&mut [Vert])->(Option<Box<MenuState>>,(Option<[f32;3]>,bool));
+    //fn get_verticies(&self,v:&mut [Vert]); 
     fn num_verticies(&self)->usize;
 }
 
@@ -97,7 +99,7 @@ mod menu{
         bot_prop:BotProp,
         bots: Vec<BBot>,
         border: axgeom::Rect<f32>,
-        treecache:TreeCache2<Numf32>, 
+        //treecache:TreeCache2<Numf32>, 
         dim:(usize,usize),
         buttons:[Button;3],
         color_button:Button,
@@ -207,7 +209,7 @@ mod menu{
                 bot_prop,
                 bots,
                 border,
-                treecache:TreeCache2::new(axgeom::XAXIS,height),
+                //treecache:TreeCache2::new(axgeom::XAXIS,height),
                 dim:(startx,starty),
                 buttons,
                 color_button,
@@ -221,7 +223,7 @@ mod menu{
         }
     }
     impl MenuState for MenuSystem{
-        fn step(&mut self, poses: &[axgeom::Vec2])->(Option<Box<MenuState>>,(Option<[f32;3]>,bool)){
+        fn step(&mut self, poses: &[axgeom::Vec2],verts:&mut[Vert])->(Option<Box<MenuState>>,(Option<[f32;3]>,bool)){
             //let bot_prop=&self.bot_prop;
             let bots=&mut self.bots;
             //let border=&self.border;
@@ -283,19 +285,13 @@ mod menu{
 
             }
 
+            self.bot_graphics.update(&self.bot_prop,bots,verts);
             
             (None,(Some(COLS[self.col_counter]),false))
         }    
 
         fn num_verticies(&self)->usize{
             BotLibGraphics::get_num_verticies(self.bots.len())
-        }
-    
-        fn get_verticies(&self,verts:&mut [Vert]){
-            //let verts=graphics.drawer.get_range_mut(&graphics.bot_handle);
-            
-            self.bot_graphics.update(&self.bot_prop,&self.bots,verts);
-            //self.graphics.drawer.get_all_ranges() 
         }
     }
 }
@@ -321,15 +317,10 @@ impl MenuGame{
         self.state.num_verticies()
     }
 
-    ///The number of verticies may change!
-	pub fn get_verticies(&self,v:&mut [Vert]){
-        self.state.get_verticies(v);
-	}
-
     ///Pass it the touch posisitons based.
     ///Returns desired color if different.
-	pub fn step(&mut self,poses:&[axgeom::Vec2])->(Option<[f32;3]>,bool){
-		let (j,cols)=self.state.step(poses);
+	pub fn step(&mut self,poses:&[axgeom::Vec2],v:&mut [Vert])->(Option<[f32;3]>,bool){
+		let (j,cols)=self.state.step(poses,v);
 
         match j{
             Some(x)=>{

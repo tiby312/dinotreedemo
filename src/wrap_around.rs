@@ -20,7 +20,7 @@ pub struct WrapAround{}
 
 impl WrapAround{
 
-	pub fn handle_mouse(prop:BotProp,tree:&mut DinoTree2<BBot>,rect:&Rect<f32>,mouse:&Mouse){
+	pub fn handle_mouse(prop:BotProp,tree:&mut DinoTree<BBot>,rect:&Rect<f32>,mouse:&Mouse){
 
 		let mut mm=*mouse;
 		
@@ -49,7 +49,7 @@ impl WrapAround{
 			&mut |mut a:ColSingle<BBot>|{bot::collide_mouse(&mut a,&prop,mouse);});
 	
 	}
-	pub fn handle(tree:&mut DinoTree2<BBot>,rect:&Rect<f32>,max_prop:BotProp){
+	pub fn handle(tree:&mut DinoTree<BBot>,rect:&Rect<f32>,max_prop:BotProp){
 		
 
 	    
@@ -85,7 +85,7 @@ impl WrapAround{
 
 	fn handle2<A:AxisTrait>(
 		prop:&BotProp,
-		tree:&mut DinoTree2<BBot>,
+		tree:&mut DinoTree<BBot>,
 		width:f32,
 		padding:f32,rect:&Rect<f32>){
 

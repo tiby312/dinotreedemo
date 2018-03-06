@@ -101,27 +101,11 @@ pub mod log{
 
 
 
-pub fn compute_tree_height(num_bots: usize, radius: f32) -> usize {
-    let _ = radius;
-    //we want each node to have space for around 300 bots.
-    //there are 2^h nodes.
-    //2^h*200>=num_bots.  Solve for h s.t. h is an integer.
-
-    const NUM_PER_NODE: usize = 10; //TODO make this a user option.
-    if num_bots <= NUM_PER_NODE {
-        return 1;
-    } else {
-        return (num_bots as f32 / NUM_PER_NODE as f32).log2().ceil() as usize;
-    }
-}
-
-
-
 
 
 pub trait TreeDraw{
     fn get_num_verticies(height:usize)->usize;
-    fn update(rect:&Rect<f32>,tree:&TreeCache2<Numf32>,verts:&mut [Vert]);
+    fn update(rect:&Rect<f32>,tree:&DinoTree<BBot>,verts:&mut [Vert]);
 }
 
 pub struct TreeDrawReal{
@@ -130,7 +114,7 @@ impl TreeDraw for TreeDrawReal{
     fn get_num_verticies(height:usize)->usize{
         dinotree::graphics::get_num_verticies(height)
     }
-    fn update(rect:&Rect<f32>,tree:&TreeCache2<Numf32>,verts:&mut [Vert]){
+    fn update(rect:&Rect<f32>,tree:&DinoTree<BBot>,verts:&mut [Vert]){
         
         #[derive(Clone,Default,Copy)]
         struct Bo(Vert);
@@ -151,7 +135,7 @@ impl TreeDraw for TreeNoDraw{
     fn get_num_verticies(_height:usize)->usize{
         0
     }
-    fn update(_rect:&Rect<f32>,_tree:&TreeCache2<Numf32>,_verts:&mut [Vert]){
+    fn update(_rect:&Rect<f32>,_tree:&DinoTree<BBot>,_verts:&mut [Vert]){
     }
 }
 
@@ -196,23 +180,26 @@ pub struct BotSystem<TDraw:TreeDraw> {
     bots: Vec<BBot>,
     bot_prop:BotProp,
     border: axgeom::Rect<f32>,
-    treecache:TreeCache2<Numf32>,
+    //treecache:TreeCache2<Numf32>,
+    axis:axgeom::Axis,
     phantom:PhantomData<TDraw>,
+    logsys:LogSystem
 }
 
 
 pub trait BotSysTrait{
-    fn get_verticies(&self,a:&mut [Vert]);
+    //fn get_verticies(&self,a:&mut [Vert]);
     fn get_num_verticies(&self)->usize;
-    fn step(&mut self, poses: &[axgeom::Vec2]);
+    fn step(&mut self, poses: &[axgeom::Vec2],a:&mut [Vert]);
 }
 
 impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
 
     fn get_num_verticies(&self)->usize{
-        let height = compute_tree_height(self.bots.len(), self.bot_prop.radius.radius());
+        let height = dinotree::compute_tree_height(self.bots.len());
         TDraw::get_num_verticies(height)+BotLibGraphics::get_num_verticies(self.bots.len())
     }
+    /*
     fn get_verticies(&self,verts:&mut [Vert])  {
         let height = compute_tree_height(self.bots.len(), self.bot_prop.radius.radius());
         
@@ -220,8 +207,13 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
         TDraw::update(&self.border,&self.treecache,a);
         self.bot_graphics.update(&self.bot_prop,&self.bots,b);
     }
+    */
 
-    fn step(&mut self, poses: &[axgeom::Vec2]) {
+    fn step(&mut self, poses: &[axgeom::Vec2],verts:&mut [Vert]) {
+        let height = dinotree::compute_tree_height(self.bots.len());
+        
+        let (tree_verts,bot_verts)=verts.split_at_mut(TDraw::get_num_verticies(height));
+        
 
         let _time_all=kenmisc::Timer2::new();
         let bots=&mut self.bots;
@@ -229,12 +221,14 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
             let border=&self.border;
             let mouse_prop=&self.mouse_prop;
             let bot_prop=self.bot_prop;
-            let treecache=&mut self.treecache;
+            //let treecache=&mut self.treecache;
 
             {
                 let _rebal=kenmisc::Timer2::new();
 
                 {
+
+                    /*
                     struct B(
                         f32
                     );
@@ -251,11 +245,13 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                     }
                     
                     let bb=MedianRelax::new(B(self.bot_prop.radius.radius()));
-                                                                                                        //TreeTimer2
-                    let (mut dyntree,_bag)=treecache.new_tree::<_,par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
-                        (bots,&bb);
-                    
-                    //self.logsys.rebal_log.write_data(&_bag.into_vec());
+                    */
+                    //let bb=MedianStrict::new();                                                                                  //TreeTimer2 ot TreeTimerEmpty
+                    //let (mut dyntree,_bag)=treecache.new_tree::<_,par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimer2>
+                    //    (bots,&bb);
+                    let (mut dyntree,_bag)=DinoTree::new::<par::Parallel,treetimer::TreeTimer2>(bots,self.axis);
+
+                    self.logsys.rebal_log.write_data(&_bag.into_vec());
 
 
                     //the dynamic tree made a copy of the bots.
@@ -263,58 +259,23 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                     //later will add together the copy and the source.
                     
                     {
-                        //self.logsys.general_log.write(log::Typ::Rebal,_rebal.elapsed());
+                        self.logsys.general_log.write(log::Typ::Rebal,_rebal.elapsed());
                             
 
 
                         let query=kenmisc::Timer2::new();
 
-                        /*
-                        let clos=|cc:ColPair<BBot>|{
-                            //use botlib::bot::BotMovementTrait;
-
-                            bot::collide(bot_prop,cc);
-                        };
-                        */
-                        //use botlib::bot::BotAcc;
-
-                        
-                        /*
-                        #[derive(Copy,Clone)]
-                        struct Bo{bot_prop:BotProp};
-
-                        impl ColMulti for Bo{
-                            type T=BBot;
-
-                            fn identity(&self)->BotAcc{
-                                BotAcc{acc:axgeom::Vec2::new(0.0,0.0)}
-                            }
-                            fn add(&self,a:&mut BotAcc,b:&BotAcc){
-                                 a.acc+=b.acc
-                            }
-                            fn collide(&self,cc:ColPair<Self::T>){
-                                bot::collide(&self.bot_prop,cc);
-                            }
-                        }
-                        let b=Bo{bot_prop:bot_prop};
-                        
-
-                        let _v=dyntree.for_every_col_pair::<DefaultDepthLevel,_,treetimer::TreeTimer2>(b);
-                        */
 
                         let a=|cc:ColPair<BBot>|{
                             bot::collide(&bot_prop,cc);
                         };
-                        let b=|a:&BBot|->BBot{
-                            let mut b=a.clone();
-                            b.inner.acc=axgeom::Vec2::new(0.0,0.0);
-                            b
-                        };
-                        let c=|a:&mut Bot,b:&mut Bot|{
-                            a.acc+=b.acc;
-                        };
-                        let _v=dyntree.for_every_col_pair::<_,_,_,DefaultDepthLevel,treetimer::TreeTimer2>(a,b,c);
-                    
+                        
+                        let _v=dyntree.for_every_col_pair::<_,treetimer::TreeTimer2>(a,b,c);
+                        
+                        self.logsys.colfind_log.write_data(&_v.into_vec());
+
+                        self.logsys.general_log.write(log::Typ::Query,query.elapsed());
+                        
 
                         WrapAround::handle(&mut dyntree,border,bot_prop);   
 
@@ -325,23 +286,26 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                             handle_mouse(bot_prop,&mut dyntree,&mouse);
                             WrapAround::handle_mouse(bot_prop,&mut dyntree,border,&mouse);
                         }
+
+                        TDraw::update(&self.border,&dyntree,tree_verts);
                         
                     }
 
                     
-                    //self.logsys.general_log.write(log::Typ::RebalQuery,_rebal.elapsed());
+                    self.logsys.general_log.write(log::Typ::RebalQuery,_rebal.elapsed());
 
                 }
         
                 {
                     let _upd=kenmisc::Timer2::new();
                     bot::update(bots,bot_prop,border);
-                    //self.logsys.general_log.write(log::Typ::BotUpdate,_upd.elapsed());
+                    self.bot_graphics.update(&self.bot_prop,bots,bot_verts);
+                    self.logsys.general_log.write(log::Typ::BotUpdate,_upd.elapsed());
                 }
             
             
-                //self.logsys.general_log.write(log::Typ::Total,_time_all.elapsed());
-                //self.logsys.general_log.newline();
+                self.logsys.general_log.write(log::Typ::Total,_time_all.elapsed());
+                self.logsys.general_log.newline();
             }
         }
     
@@ -376,27 +340,28 @@ impl<TDraw:TreeDraw> BotSystem<TDraw> {
         let mut bots = bot::create_bots(num_bots,&world,&bot_prop);
 
         //TODO should it be based on max prop or average prop
-        let height = compute_tree_height(bots.len(), bot_prop.radius.radius());
+        let height = dinotree::compute_tree_height(bots.len());
 
         let axis=if startx>starty{
             axgeom::XAXIS
         }else{
             axgeom::YAXIS
         };
-        let mut treecache=TreeCache2::new(axis,height);
+        //let mut treecache=TreeCache2::new(axis,height);
 
         
-        
+        /*
         {         
             let k=MedianStrict::<Numf32>::new();
             let (_dyntree,_bag)=treecache.new_tree::<_,par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimerEmpty>
                     (&mut bots,&k);
         }
+        */
         
         
         let bot_graphics=BotLibGraphics::new(&bot_prop);
         
-        //let logsys=LogSystem::new(height);
+        let logsys=LogSystem::new(height);
         
         
 
@@ -407,16 +372,17 @@ impl<TDraw:TreeDraw> BotSystem<TDraw> {
             bots,
             bot_prop,
             border: world,
-            treecache:treecache,
+            axis,
+            //treecache:treecache,
             phantom:PhantomData,
-            //logsys
+            logsys
         }
     }
 }
 
 
 
-fn handle_mouse(prop:BotProp,tree:&mut DinoTree2<BBot>,mouse:&Mouse){
+fn handle_mouse(prop:BotProp,tree:&mut DinoTree<BBot>,mouse:&Mouse){
       
     //let mut rect=Rects::new(tree);
     //let rect=tree.rects();
