@@ -134,9 +134,9 @@ pub trait BotMovementTrait{
 */
 
 
-pub fn collide(prop:&BotProp,cc:ColPair<BBot>){
+pub fn collide(prop:&BotProp,a:ColSingle<BBot>,b:ColSingle<BBot>){
    
-    let bots=[cc.a.1,cc.b.1];
+    let bots=[a.1,b.1];
 
 
 

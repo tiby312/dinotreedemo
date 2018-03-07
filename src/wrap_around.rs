@@ -118,15 +118,17 @@ impl WrapAround{
 		let rect1=convert_aabbox(bot::convert_to_nan(rect1));
 		let rect2=convert_aabbox(bot::convert_to_nan(rect2));
 
-		let bo=|cc:ColPair<BBot>|{
-			    let mut copy_botstuff=cc.a.1.clone();
-			    let mut pos=cc.a.1.pos.clone();
+		let bo=|a:ColSingle<BBot>,b:ColSingle<BBot>|{
+
+			    let mut copy_botstuff=a.1.clone();
+			    let mut pos=a.1.pos.clone();
 			    *pos.get_axis_mut(top_d_axis)+=top_down_length;
 			    copy_botstuff.pos=pos;
 			     
-			    let cc_copy=ColPair{a:(cc.a.0,&mut copy_botstuff),b:(cc.b.0,cc.b.1)};
-			    
-			    bot::collide(&prop,cc_copy);
+			    //let cc_copy=ColPair{a:(a.0,&mut copy_botstuff),b:(b.0,b.1)};
+			    let cca=ColSingle(a.0,&mut copy_botstuff);
+			    let ccb=ColSingle(b.0,b.1);
+			    bot::collide(&prop,cca,ccb);
 		};
 		support::collide_two_rect_parallel::<A::Next,_,_,_>(tree,&rect1,&rect2,bo);
 		

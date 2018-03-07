@@ -249,7 +249,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                     //let bb=MedianStrict::new();                                                                                  //TreeTimer2 ot TreeTimerEmpty
                     //let (mut dyntree,_bag)=treecache.new_tree::<_,par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimer2>
                     //    (bots,&bb);
-                    let (mut dyntree,_bag)=DinoTree::new::<par::Parallel,treetimer::TreeTimer2>(bots,self.axis);
+                    let (mut dyntree,_bag)=DinoTree::new::<treetimer::TreeTimer2>(bots,self.axis);
 
                     self.logsys.rebal_log.write_data(&_bag.into_vec());
 
@@ -266,12 +266,19 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                         let query=kenmisc::Timer2::new();
 
 
-                        let a=|cc:ColPair<BBot>|{
-                            bot::collide(&bot_prop,cc);
+                        let a=|a:ColSingle<BBot>,b:ColSingle<BBot>|{
+                            bot::collide(&bot_prop,a,b);
                         };
                         
-                        let _v=dyntree.for_every_col_pair::<_,treetimer::TreeTimer2>(a,b,c);
+                        let _v=dyntree.intersect_every_pair::<_,treetimer::TreeTimer2>(a);
                         
+                        /*
+                        let a=AABBox::new((Numf32::from_f32(0.0),Numf32::from_f32(100.0)),(Numf32::from_f32(0.0),Numf32::from_f32(100.0)));
+                        dyntree.for_all_in_rect(&a,|a:ColSingle<BBot>|{
+                            a.1.vel=axgeom::Vec2::new(0.0,0.0);
+                        });
+                        */
+
                         self.logsys.colfind_log.write_data(&_v.into_vec());
 
                         self.logsys.general_log.write(log::Typ::Query,query.elapsed());
