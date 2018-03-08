@@ -2,7 +2,7 @@ use axgeom;
 use botlib::graphics::BotLibGraphics;
 
 use dinotree;
-use dinotree::prelude::*;
+use dinotree::*;
 use dinotree::support::Numf32;
 
 use axgeom::Rect;
@@ -196,7 +196,8 @@ pub trait BotSysTrait{
 impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
 
     fn get_num_verticies(&self)->usize{
-        let height = dinotree::compute_tree_height(self.bots.len());
+        use dinotree::graphics::compute_tree_height;
+        let height = compute_tree_height(self.bots.len());
         TDraw::get_num_verticies(height)+BotLibGraphics::get_num_verticies(self.bots.len())
     }
     /*
@@ -210,7 +211,8 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
     */
 
     fn step(&mut self, poses: &[axgeom::Vec2],verts:&mut [Vert]) {
-        let height = dinotree::compute_tree_height(self.bots.len());
+        use dinotree::graphics::compute_tree_height;
+        let height = compute_tree_height(self.bots.len());
         
         let (tree_verts,bot_verts)=verts.split_at_mut(TDraw::get_num_verticies(height));
         
@@ -249,7 +251,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                     //let bb=MedianStrict::new();                                                                                  //TreeTimer2 ot TreeTimerEmpty
                     //let (mut dyntree,_bag)=treecache.new_tree::<_,par::Parallel,DefaultDepthLevel,_,treetimer::TreeTimer2>
                     //    (bots,&bb);
-                    let (mut dyntree,_bag)=DinoTree::new::<treetimer::TreeTimer2>(bots,self.axis);
+                    let (mut dyntree,_bag)=DinoTree::new_debug(bots,self.axis==axgeom::XAXIS);
 
                     self.logsys.rebal_log.write_data(&_bag.into_vec());
 
@@ -270,7 +272,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                             bot::collide(&bot_prop,a,b);
                         };
                         
-                        let _v=dyntree.intersect_every_pair::<_,treetimer::TreeTimer2>(a);
+                        let _v=dyntree.intersect_every_pair_debug(a);
                         
                         /*
                         let a=AABBox::new((Numf32::from_f32(0.0),Numf32::from_f32(100.0)),(Numf32::from_f32(0.0),Numf32::from_f32(100.0)));
@@ -347,7 +349,8 @@ impl<TDraw:TreeDraw> BotSystem<TDraw> {
         let mut bots = bot::create_bots(num_bots,&world,&bot_prop);
 
         //TODO should it be based on max prop or average prop
-        let height = dinotree::compute_tree_height(bots.len());
+        use dinotree::graphics::compute_tree_height;
+        let height = compute_tree_height(bots.len());
 
         let axis=if startx>starty{
             axgeom::XAXIS

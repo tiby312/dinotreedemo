@@ -6,7 +6,7 @@ use ordered_float::NotNaN;
 use axgeom::Rect;
 
 
-use dinotree::prelude::*;
+use dinotree::*;
 use dinotree::support::Numf32;
 
 
