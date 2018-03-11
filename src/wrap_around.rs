@@ -120,14 +120,14 @@ impl WrapAround{
 
 		let bo=|a:ColSingle<BBot>,b:ColSingle<BBot>|{
 
-			    let mut copy_botstuff=a.1.clone();
-			    let mut pos=a.1.pos.clone();
+			    let mut copy_botstuff=a.inner.clone();
+			    let mut pos=a.inner.pos.clone();
 			    *pos.get_axis_mut(top_d_axis)+=top_down_length;
 			    copy_botstuff.pos=pos;
 			     
 			    //let cc_copy=ColPair{a:(a.0,&mut copy_botstuff),b:(b.0,b.1)};
-			    let cca=ColSingle(a.0,&mut copy_botstuff);
-			    let ccb=ColSingle(b.0,b.1);
+			    let cca=ColSingle{rect:a.rect,inner:&mut copy_botstuff};
+			    let ccb=ColSingle{rect:b.rect,inner:b.inner};
 			    bot::collide(&prop,cca,ccb);
 		};
 		support::collide_two_rect_parallel::<A::Next,_,_,_>(tree,&rect1,&rect2,bo);

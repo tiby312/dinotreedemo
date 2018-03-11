@@ -136,7 +136,7 @@ pub trait BotMovementTrait{
 
 pub fn collide(prop:&BotProp,a:ColSingle<BBot>,b:ColSingle<BBot>){
    
-    let bots=[a.1,b.1];
+    let bots=[a.inner,b.inner];
 
 
 
@@ -270,7 +270,7 @@ pub fn collide_mouse(bot:&mut ColSingle<BBot>,prop:&BotProp,mouse:&Mouse){
     //let stuff=bot.0;
     //let val=bot.1;
 
-    let offset = *mouse.get_midpoint() - bot.1.pos;
+    let offset = *mouse.get_midpoint() - bot.inner.pos;
     let dis_sqr = offset.len_sqr();
     
     if dis_sqr < (mouse.get_radius() + prop.radius.radius()).powi(2) {
@@ -284,7 +284,7 @@ pub fn collide_mouse(bot:&mut ColSingle<BBot>,prop:&BotProp,mouse:&Mouse){
         let blap = offset * ( (  mag/dis) ) ;
 
         let acc = blap;// / prop.mass;
-        bot.1.acc+=acc;
+        bot.inner.acc+=acc;
         //bot.apply_force(&acc);
     }
 }
