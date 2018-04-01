@@ -2,7 +2,7 @@ use axgeom;
 use botlib::graphics::BotLibGraphics;
 use dinotree;
 use dinotree::*;
-use dinotree::support::Numf32;
+//use dinotree::support::Numf32;
 use axgeom::Rect;
 use wrap_around::WrapAround;
 use botlib::mouse::Mouse;
@@ -12,10 +12,10 @@ use botlib::mouse::MouseProp;
 use botlib::bot;
 use std::marker::PhantomData;
 use kenmisc;
-use dinotree::support::DefaultDepthLevel;
-use axgeom::AxisTrait;
+//use dinotree::support::DefaultDepthLevel;
+//use axgeom::AxisTrait;
 use botlib::bot::BBot;
-use botlib::bot::Bot;
+//use botlib::bot::Bot;
 use Vert;
 use botlib::bot::convert_aabbox;
 use dinotree::graphics::compute_tree_height;
@@ -149,16 +149,16 @@ pub struct LogSystem{
 impl LogSystem{
     pub fn new(height:usize)->LogSystem{
 
-        let mut general_log=mlog::MLog::new("/storage/emulated/0/Download/data.csv");
+        let general_log=mlog::MLog::new("/storage/emulated/0/Download/data.csv");
 
-        let mut rebal_log={
+        let rebal_log={
             let mut rebal_log=Logger::new("/storage/emulated/0/Download/rebal.csv");
             let a:Vec<String>=(0..height).map(|a|format!("level {}",a)).collect();
             rebal_log.write_str("Iteration",&a);
             rebal_log
         };
 
-        let mut colfind_log={
+        let colfind_log={
             let mut query_log=Logger::new("/storage/emulated/0/Download/query.csv");
             let a:Vec<String>=(0..height).map(|a|format!("level {}",a)).collect();
             query_log.write_str("Iteration",&a);
@@ -179,7 +179,7 @@ pub struct BotSystem<TDraw:TreeDraw> {
     border: axgeom::Rect<f32>,
     axis:axgeom::Axis,
     phantom:PhantomData<TDraw>,
-    logsys:LogSystem
+    //logsys:LogSystem
 }
 
 
@@ -198,6 +198,9 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
 
     fn step(&mut self, poses: &[axgeom::Vec2],verts:&mut [Vert]) {
         use dinotree::graphics::compute_tree_height;
+        
+
+
         let height = compute_tree_height(self.bots.len());
         
         let (tree_verts,bot_verts)=verts.split_at_mut(TDraw::get_num_verticies(height));
@@ -215,9 +218,9 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
 
                 {
 
-                    let (mut dyntree,_bag)=DinoTree::new_debug(bots,self.axis==axgeom::XAXIS);
+                    let mut dyntree=DinoTree::new(bots,self.axis==axgeom::XAXIS);
 
-                    self.logsys.rebal_log.write_data(&_bag.into_vec());
+                    //self.logsys.rebal_log.write_data(&_bag.into_vec());
 
 
                     //the dynamic tree made a copy of the bots.
@@ -225,7 +228,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                     //later will add together the copy and the source.
                     
                     {
-                        self.logsys.general_log.write(log::Typ::Rebal,_rebal.elapsed());
+                        //self.logsys.general_log.write(log::Typ::Rebal,_rebal.elapsed());
                             
 
 
@@ -236,7 +239,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                             bot::collide(&bot_prop,a,b);
                         };
                         
-                        let _v=dyntree.intersect_every_pair_debug(a);
+                        let _v=dyntree.intersect_every_pair(a);
                         
                         /*
                         let a=AABBox::new((Numf32::from_f32(0.0),Numf32::from_f32(100.0)),(Numf32::from_f32(0.0),Numf32::from_f32(100.0)));
@@ -245,9 +248,9 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                         });
                         */
 
-                        self.logsys.colfind_log.write_data(&_v.into_vec());
+                        //self.logsys.colfind_log.write_data(&_v.into_vec());
 
-                        self.logsys.general_log.write(log::Typ::Query,query.elapsed());
+                        //self.logsys.general_log.write(log::Typ::Query,query.elapsed());
                         
 
                         WrapAround::handle(&mut dyntree,border,bot_prop);   
@@ -269,7 +272,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                     }
 
                     
-                    self.logsys.general_log.write(log::Typ::RebalQuery,_rebal.elapsed());
+                    //self.logsys.general_log.write(log::Typ::RebalQuery,_rebal.elapsed());
 
                 }
         
@@ -277,12 +280,12 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                     let _upd=kenmisc::Timer2::new();
                     bot::update(bots,bot_prop,border);
                     self.bot_graphics.update(&self.bot_prop,bots,bot_verts);
-                    self.logsys.general_log.write(log::Typ::BotUpdate,_upd.elapsed());
+                    //self.logsys.general_log.write(log::Typ::BotUpdate,_upd.elapsed());
                 }
             
             
-                self.logsys.general_log.write(log::Typ::Total,_time_all.elapsed());
-                self.logsys.general_log.newline();
+                //self.logsys.general_log.write(log::Typ::Total,_time_all.elapsed());
+                //self.logsys.general_log.newline();
             }
         }
     
@@ -291,8 +294,8 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
 }
 
 pub fn new(num_bots:usize,startx:usize,starty:usize,draw_tree:bool)->Box<BotSysTrait>{
-    use axgeom::XAXIS_S;
-    use axgeom::YAXIS_S;
+    //use axgeom::XAXISS;
+    //use axgeom::YAXISS;
 
     if draw_tree{
         let k=BotSystem::<TreeDrawReal>::new_inner(num_bots,startx,starty);
@@ -314,7 +317,7 @@ impl<TDraw:TreeDraw> BotSystem<TDraw> {
         let unit=bot::get_unit(startx,starty);
         let (bot_prop,mouse_prop)=bot::create_from_radius(br,unit*10.0);
 
-        let mut bots = bot::create_bots(num_bots,&world,&bot_prop);
+        let bots = bot::create_bots(num_bots,&world,&bot_prop);
 
         let height = compute_tree_height(bots.len());
 
@@ -327,7 +330,7 @@ impl<TDraw:TreeDraw> BotSystem<TDraw> {
         
         let bot_graphics=BotLibGraphics::new(&bot_prop);
         
-        let logsys=LogSystem::new(height);
+        //let logsys=LogSystem::new(height);
         
         BotSystem {
             bot_graphics:bot_graphics,
@@ -337,7 +340,7 @@ impl<TDraw:TreeDraw> BotSystem<TDraw> {
             border: world,
             axis,
             phantom:PhantomData,
-            logsys
+            //logsys
         }
     }
 }

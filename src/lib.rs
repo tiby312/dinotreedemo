@@ -3,6 +3,7 @@ extern crate axgeom;
 extern crate kenmisc;
 extern crate ordered_float;
 //extern crate testy;
+extern crate rayon;
 extern crate ascii_num;
 extern crate dinotree;
 

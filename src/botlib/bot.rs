@@ -33,7 +33,7 @@ pub struct BBot{
 pub struct Bot{
     pub pos: axgeom::Vec2,
     pub vel: axgeom::Vec2,
-    pub acc: axgeom::Vec2
+    pub acc: axgeom::Vec2,
 }
 
 impl BBot{
@@ -43,6 +43,7 @@ impl BBot{
         let acc=vel;
         BBot{inner:Bot{pos,vel,acc},rect}
     }
+    /*
     fn pos(&self)->&axgeom::Vec2{
         &self.inner.pos
     }
@@ -52,6 +53,7 @@ impl BBot{
     fn get_acc(&self)->&axgeom::Vec2{
         &self.inner.acc
     }
+    */
     pub fn update_box(&mut self,radius:&f32){
         let r:Rect<f32>=Rect::from_pos_and_radius(&self.inner.pos,*radius);
         
@@ -61,15 +63,15 @@ impl BBot{
 
 pub fn convert_aabbox(r:Rect<Numf32>)->AABBox<Numf32>{
 
-    let a=r.get_range2::<axgeom::XAXIS_S>();
-    let b=r.get_range2::<axgeom::YAXIS_S>();
+    let a=r.get_range2::<axgeom::XAXISS>();
+    let b=r.get_range2::<axgeom::YAXISS>();
     
     AABBox::new((a.start,a.end),(b.start,b.end))
 }
 pub fn convert_to_nan(r:Rect<f32>)->Rect<Numf32>{
 
-    let a=r.get_range2::<axgeom::XAXIS_S>();
-    let b=r.get_range2::<axgeom::YAXIS_S>();
+    let a=r.get_range2::<axgeom::XAXISS>();
+    let b=r.get_range2::<axgeom::YAXISS>();
     
     let rect=Rect::new(
         Numf32(NotNaN::new(a.start).unwrap()),
@@ -139,22 +141,19 @@ pub fn collide(prop:&BotProp,a:ColSingle<BBot>,b:ColSingle<BBot>){
     let bots=[a.inner,b.inner];
 
 
-
-    //let vals=[cc.a.1,cc.b.1];
-
-
-
     let offset = bots[0].pos - bots[1].pos;
 
     let dis_sqr = offset.len_sqr();
 
     
     if dis_sqr >= prop.radius.radius2_squared() {
+        //They not touching (bots are circular).
         return ;
     }
 
     //At this point, we know they collide!!!!
 
+    /*
     //if directly ontop of each other
     if dis_sqr < prop.minimum_dis_sqr {
         let vec=axgeom::Vec2::new(prop.max_acc,0.0); //TODO dont hardcode. and test
@@ -162,22 +161,29 @@ pub fn collide(prop:&BotProp,a:ColSingle<BBot>,b:ColSingle<BBot>){
         bots[1].acc+=-vec;//.apply_force(&-vec);
         return;
     }
+    */
 
     let sum_rad = prop.radius.radius2();
 
     let dis = dis_sqr.sqrt();
 
+    if dis.is_nan(){
+        let vec=axgeom::Vec2::new(prop.max_acc,0.0); //TODO dont hardcode. and test
+        bots[0].acc+=vec;//apply_force(&vec);
+        bots[1].acc+=-vec;//.apply_force(&-vec);
+        return;
+    }
     
 
-    //let input=(sum_rad-dis)/sum_rad;
-    //let push_mag_norm=(2.0*(input*input)).min(1.0);
-    
+    /*    
+    //we want to find (dis/)
 
     let sum_rad_sqr=prop.radius.radius2_squared();
     let input=sum_rad-dis;
     //(a-b)(a-b)=a*a-2ab+b*b
     let push_mag_norm=(3.0*(input*input)/sum_rad_sqr).min(1.0);
     
+
 
     //assert!(push_mag_norm<1.1);
     let push_mag=push_mag_norm*prop.collision_push;
@@ -188,7 +194,19 @@ pub fn collide(prop:&BotProp,a:ColSingle<BBot>,b:ColSingle<BBot>){
 
 
     let push_force=offset*(push_mag/dis);
+    */
     
+    //vv is (0,1] where higher means the bots are closer together.
+    let vv=(sum_rad-dis)/sum_rad;
+
+    //x^2 squared grows as a curve. This leads to a more smooth bot repellings.
+    let vv=vv*vv;
+    
+    let vv2=(3.0*vv).min(1.0);
+
+    let push_mag=vv2*prop.collision_push;
+    let push_force=offset*(push_mag/dis);
+
     //center of mass velocity (treating mass of each bot as one s.t. their sum mass is 2)
     let cvel = (bots[0].vel + bots[1].vel ) / 2.0;
 
@@ -198,21 +216,62 @@ pub fn collide(prop:&BotProp,a:ColSingle<BBot>,b:ColSingle<BBot>){
                 -(bots[1].vel - cvel).inner_product(&offset)
             ];
 
-    let k=prop.collision_drag/dis_sqr;
+    let k=prop.collision_drag/dis;
     let drag_force=[
                 offset * (mag[0] * k),
                 offset * (mag[1] * k)
                 ];
 
+
     let acc=[
-        (drag_force[0] + push_force),
-        (drag_force[1] - push_force)
+        (drag_force[0]+  push_force),
+        (drag_force[1]- push_force)
     ];
     
+    //bots[0].vel+=acc[0];
+    //bots[1].vel+=acc[1];
     bots[0].acc+=acc[0];//.apply_force(&acc[0]);
     bots[1].acc+=acc[1];//bots[1].apply_force(&acc[1]);
+
 }
 
+
+
+pub fn collide_mouse(bot:&mut ColSingle<BBot>,prop:&BotProp,mouse:&Mouse){
+    //let stuff=bot.0;
+    //let val=bot.1;
+
+    let offset = *mouse.get_midpoint() - bot.inner.pos;
+    let dis_sqr = offset.len_sqr();
+    
+    let sum_rad=mouse.get_radius() + prop.radius.radius();
+    if dis_sqr < sum_rad*sum_rad {
+
+        let dis = dis_sqr.sqrt();
+
+        if dis.is_nan(){
+            return;
+        }
+
+        let vv=(sum_rad-dis)/sum_rad;
+        let vv=vv*vv;
+        let vv2=(5.0*vv).min(1.0);
+
+
+        let push_mag=vv2*mouse.mouse_prop.force;
+        let push_force=offset*(push_mag/dis);
+
+        /*
+        let mag = -(1.0 - (dis / mouse.get_radius())) * mouse.mouse_prop.force;
+
+        let blap = offset * ( (  mag/dis) ) ;
+
+        let acc = blap;// / prop.mass;
+        */
+        bot.inner.acc+=-push_force;
+        //bot.apply_force(&acc);
+    }
+}
 
 pub fn update_bot(bot:&mut BBot,prop:&BotProp,rect:&axgeom::Rect<f32>) {
     {
@@ -266,29 +325,6 @@ pub fn update_bot(bot:&mut BBot,prop:&BotProp,rect:&axgeom::Rect<f32>) {
     
 
 }
-pub fn collide_mouse(bot:&mut ColSingle<BBot>,prop:&BotProp,mouse:&Mouse){
-    //let stuff=bot.0;
-    //let val=bot.1;
-
-    let offset = *mouse.get_midpoint() - bot.inner.pos;
-    let dis_sqr = offset.len_sqr();
-    
-    if dis_sqr < (mouse.get_radius() + prop.radius.radius()).powi(2) {
-
-        let dis = dis_sqr.sqrt();
-
-        //let offset_norm = offset / dis;
-
-        let mag = -(1.0 - (dis / mouse.get_radius())) * mouse.mouse_prop.force;
-
-        let blap = offset * ( (  mag/dis) ) ;
-
-        let acc = blap;// / prop.mass;
-        bot.inner.acc+=acc;
-        //bot.apply_force(&acc);
-    }
-}
-
 pub fn compute_bot_radius(num_bots: usize, world: &axgeom::Rect<f32>) -> Option<f32> {
     let a=world.get_range(axgeom::XAXIS);
     let b=world.get_range(axgeom::YAXIS);
@@ -314,6 +350,7 @@ pub fn compute_bot_radius(num_bots: usize, world: &axgeom::Rect<f32>) -> Option<
     if radius < 0.00001 {
         return None; //the radius required to have the spacing we need and everything is either impossible for very very small.
     }
+    //Some(10.0)
     Some(radius)
 }
 
@@ -360,7 +397,7 @@ pub fn create_from_radius(bot_radius:f32,mouse_radius:f32)->(BotProp,MouseProp){
     let bot_prop = BotProp {
         radius: RadiusProp::create(bot_radius),
         collision_push: bot_radius*0.2,
-        collision_drag: bot_radius*0.02,
+        collision_drag: bot_radius*0.005,
         minimum_dis_sqr: 0.000001,
         max_acc:bot_radius*0.3
     }; 
@@ -390,13 +427,17 @@ pub fn create_bots_spaced<X,Y:Fn(&axgeom::Vec2)->X>(world:&axgeom::Rect<f32>,num
     
     let mut man=Vec::with_capacity(num_bot);
     for _ in 0..num_bot{
-        let b=func(&cursor);//Bot::new(&cursor);
+        let bb=func(&cursor);
         cursor += axgeom::Vec2::new(spacing, 0.0);
         if *cursor.get().0 > a.end {
             *cursor.get_mut().0 = *start.get().0;
             cursor += axgeom::Vec2::new(0.0, spacing);
+            if *cursor.get().1>b.end{
+                cursor=start;
+            }
         }
-        man.push(b);
+
+        man.push(bb);
     }
     man    
 }

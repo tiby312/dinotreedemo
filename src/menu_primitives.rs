@@ -9,8 +9,8 @@ use axgeom;
 //use botlib::mouse::MouseProp;
 //use dinotree::TreeCache;
 //use dinotree::support::Numf32;
-use axgeom::XAXIS_S;
-use axgeom::YAXIS_S;
+use axgeom::XAXISS;
+use axgeom::YAXISS;
 //use sys::TreeNoDraw;
 //use botlib::bot;
 use botlib::bot::BBot;
@@ -80,7 +80,7 @@ impl Button{
     }
     pub fn draw<'a,I:Iterator<Item=&'a mut BBot>>(&self,bb:&mut I){
         for pos in self.poses.iter(){
-            use dinotree::SweepTrait;
+            //use dinotree::SweepTrait;
            
             //let i=i as f32;
             let k=bb.next().unwrap();
@@ -93,8 +93,8 @@ impl Button{
             k.inner.vel=axgeom::Vec2::new(0.0,0.0);
             k.inner.acc=axgeom::Vec2::new(0.0,0.0);
 
-            let dx=self.dim.get_range2::<XAXIS_S>();
-            let yx=self.dim.get_range2::<YAXIS_S>();
+            let dx=self.dim.get_range2::<XAXISS>();
+            let yx=self.dim.get_range2::<YAXISS>();
 
             k.inner.pos=axgeom::Vec2::new(dx.start+x*self.spacing,yx.start+y*self.spacing);
         }
@@ -122,7 +122,7 @@ impl NumberThing{
         self.number
     }
     pub fn draw<'a,I:Iterator<Item=&'a mut BBot>>(&self,bb:&mut I){
-        use dinotree::SweepTrait;
+        //use dinotree::SweepTrait;
         //use ascii_num;
         for (i,digit) in self.digits.iter().rev().enumerate(){
             let i=i as f32;

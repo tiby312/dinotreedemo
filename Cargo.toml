@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Ken Reed <kenakioreed@gmail.com>"]
 
 [dependencies]
+rayon = "1.0.1"
 ordered-float = "0.5.0"
 kenmisc = { git = "https://github.com/tiby312/kenmisc.git" }
 dinotree={path="../dinotree"}

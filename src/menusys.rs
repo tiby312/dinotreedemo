@@ -8,8 +8,8 @@ use botlib::bot::BotProp;
 use botlib::graphics::BotLibGraphics;
 use botlib::mouse::MouseProp;
 //use dinotree::TreeCache2;
-use dinotree::support::Numf32;
-use axgeom::XAXIS_S;
+//use dinotree::support::Numf32;
+//use axgeom::XAXISS;
 //use axgeom::YAXIS_S;
 //use sys::TreeNoDraw;
 use botlib::bot;
@@ -154,7 +154,7 @@ mod menu{
     impl MenuSystem{
         pub fn new(startx:usize,starty:usize)->(MenuSystem,[f32;3]){
             
-            let height=3;
+            //let height=3;
             let num_bots=5000;
 
             let border=axgeom::Rect::new(0.0,startx as f32,0.0,starty as f32);
@@ -197,7 +197,7 @@ mod menu{
             let numberthing={
                 let x=startx as f32-unit*20.0;
                 let y=starty as f32-unit*50.0;
-                NumberThing::new(unit*15.0,unit*2.0,60000,axgeom::Vec2::new(x,y))
+                NumberThing::new(unit*15.0,unit*2.0,6000,axgeom::Vec2::new(x,y))
             };
 
             let col=COLS[0];
@@ -236,10 +236,10 @@ mod menu{
 
                 //up arrow
                 if self.buttons[0].get_dim().contains_vec(i){
-                    self.numberthing.update_number(curr+20);
+                    self.numberthing.update_number(curr+50);
                 }
                 if self.buttons[1].get_dim().contains_vec(i){
-                    self.numberthing.update_number((curr as isize-20).max(1000) as usize); 
+                    self.numberthing.update_number((curr as isize-50).max(1000) as usize); 
                 }
                 if self.buttons[2].get_dim().contains_vec(i){
 

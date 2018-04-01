@@ -4,8 +4,8 @@ use botlib::bot::BotProp;
 
 
 use dinotree::*;
-use dinotree::Rects;
-use dinotree::support::Numf32;
+//use dinotree::Rects;
+//use dinotree::support::Numf32;
 use dinotree::support;
 
 use botlib::bot::BBot;
@@ -66,18 +66,11 @@ impl WrapAround{
 
         
         //Regardless of the starting axis, we want to handle x and y.
-        use axgeom::XAXIS_S;
-		use axgeom::YAXIS_S;
+        use axgeom::XAXISS;
+		use axgeom::YAXISS;
 
-		{
-        	//let mut rects=tree.rects();
-			Self::handle2::<XAXIS_S>(&max_prop,tree,width,padding,rect);
-        }
-        {
-        	//let mut rects=tree.rects();
-        	Self::handle2::<YAXIS_S>(&max_prop,tree,width,padding,rect);
-        }
-	
+		Self::handle2::<XAXISS>(&max_prop,tree,width,padding,rect);
+        Self::handle2::<YAXISS>(&max_prop,tree,width,padding,rect);
 	}
 
 
