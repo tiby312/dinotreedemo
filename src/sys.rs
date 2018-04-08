@@ -177,9 +177,9 @@ pub struct BotSystem<TDraw:TreeDraw> {
     bots: Vec<BBot>,
     bot_prop:BotProp,
     border: axgeom::Rect<f32>,
-    axis:axgeom::Axis,
+    axis:dinotree::StartAxis,
     phantom:PhantomData<TDraw>,
-    //logsys:LogSystem
+    logsys:LogSystem
 }
 
 
@@ -218,9 +218,9 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
 
                 {
 
-                    let mut dyntree=DinoTree::new(bots,self.axis==axgeom::XAXIS);
+                    let (mut dyntree,_bag)=DinoTree::new_debug(bots,self.axis);
 
-                    //self.logsys.rebal_log.write_data(&_bag.into_vec());
+                    self.logsys.rebal_log.write_data(&_bag.into_vec());
 
 
                     //the dynamic tree made a copy of the bots.
@@ -228,7 +228,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                     //later will add together the copy and the source.
                     
                     {
-                        //self.logsys.general_log.write(log::Typ::Rebal,_rebal.elapsed());
+                        self.logsys.general_log.write(log::Typ::Rebal,_rebal.elapsed());
                             
 
 
@@ -239,7 +239,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                             bot::collide(&bot_prop,a,b);
                         };
                         
-                        let _v=dyntree.intersect_every_pair(a);
+                        let _v=dyntree.intersect_every_pair_debug(a);
                         
                         /*
                         let a=AABBox::new((Numf32::from_f32(0.0),Numf32::from_f32(100.0)),(Numf32::from_f32(0.0),Numf32::from_f32(100.0)));
@@ -248,9 +248,9 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                         });
                         */
 
-                        //self.logsys.colfind_log.write_data(&_v.into_vec());
+                        self.logsys.colfind_log.write_data(&_v.into_vec());
 
-                        //self.logsys.general_log.write(log::Typ::Query,query.elapsed());
+                        self.logsys.general_log.write(log::Typ::Query,query.elapsed());
                         
 
                         WrapAround::handle(&mut dyntree,border,bot_prop);   
@@ -272,7 +272,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                     }
 
                     
-                    //self.logsys.general_log.write(log::Typ::RebalQuery,_rebal.elapsed());
+                    self.logsys.general_log.write(log::Typ::RebalQuery,_rebal.elapsed());
 
                 }
         
@@ -280,12 +280,12 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                     let _upd=kenmisc::Timer2::new();
                     bot::update(bots,bot_prop,border);
                     self.bot_graphics.update(&self.bot_prop,bots,bot_verts);
-                    //self.logsys.general_log.write(log::Typ::BotUpdate,_upd.elapsed());
+                    self.logsys.general_log.write(log::Typ::BotUpdate,_upd.elapsed());
                 }
             
             
-                //self.logsys.general_log.write(log::Typ::Total,_time_all.elapsed());
-                //self.logsys.general_log.newline();
+                self.logsys.general_log.write(log::Typ::Total,_time_all.elapsed());
+                self.logsys.general_log.newline();
             }
         }
     
@@ -321,16 +321,12 @@ impl<TDraw:TreeDraw> BotSystem<TDraw> {
 
         let height = compute_tree_height(bots.len());
 
-        let axis=if startx>starty{
-            axgeom::XAXIS
-        }else{
-            axgeom::YAXIS
-        };
+        let axis=dinotree::support::choose_best_axis(&AABBox::new((0,startx),(0,starty)));
         
         
         let bot_graphics=BotLibGraphics::new(&bot_prop);
         
-        //let logsys=LogSystem::new(height);
+        let logsys=LogSystem::new(height);
         
         BotSystem {
             bot_graphics:bot_graphics,
@@ -340,7 +336,7 @@ impl<TDraw:TreeDraw> BotSystem<TDraw> {
             border: world,
             axis,
             phantom:PhantomData,
-            //logsys
+            logsys
         }
     }
 }

@@ -7,7 +7,6 @@ use axgeom::Rect;
 
 
 use dinotree::*;
-use dinotree::support::Numf32;
 
 
 
@@ -23,9 +22,9 @@ pub struct BotProp {
 
 
 
-#[derive(Copy,Clone,Debug)]
+#[derive(Clone,Debug)]
 pub struct BBot{
-    pub rect:AABBox<Numf32>,
+    pub rect:AABBox<NotNaN<f32>>,
     pub inner:Bot
 }
 
@@ -37,23 +36,13 @@ pub struct Bot{
 }
 
 impl BBot{
-    fn new(posa:&axgeom::Vec2,rect:AABBox<Numf32>)->BBot{
+    fn new(posa:&axgeom::Vec2,rect:AABBox<NotNaN<f32>>)->BBot{
         let pos=*posa;
         let vel=axgeom::Vec2::new(0.0,0.0);
         let acc=vel;
         BBot{inner:Bot{pos,vel,acc},rect}
     }
-    /*
-    fn pos(&self)->&axgeom::Vec2{
-        &self.inner.pos
-    }
-    fn vel(&self)->&axgeom::Vec2{
-        &self.inner.vel
-    }
-    fn get_acc(&self)->&axgeom::Vec2{
-        &self.inner.acc
-    }
-    */
+
     pub fn update_box(&mut self,radius:&f32){
         let r:Rect<f32>=Rect::from_pos_and_radius(&self.inner.pos,*radius);
         
@@ -61,38 +50,38 @@ impl BBot{
     }
 }
 
-pub fn convert_aabbox(r:Rect<Numf32>)->AABBox<Numf32>{
+pub fn convert_aabbox(r:Rect<NotNaN<f32>>)->AABBox<NotNaN<f32>>{
 
     let a=r.get_range2::<axgeom::XAXISS>();
     let b=r.get_range2::<axgeom::YAXISS>();
     
     AABBox::new((a.start,a.end),(b.start,b.end))
 }
-pub fn convert_to_nan(r:Rect<f32>)->Rect<Numf32>{
+pub fn convert_to_nan(r:Rect<f32>)->Rect<NotNaN<f32>>{
 
     let a=r.get_range2::<axgeom::XAXISS>();
     let b=r.get_range2::<axgeom::YAXISS>();
     
     let rect=Rect::new(
-        Numf32(NotNaN::new(a.start).unwrap()),
-        Numf32(NotNaN::new(a.end).unwrap()),
-        Numf32(NotNaN::new(b.start).unwrap()),
-        Numf32(NotNaN::new(b.end).unwrap())
+        NotNaN::new(a.start).unwrap(),
+        NotNaN::new(a.end).unwrap(),
+        NotNaN::new(b.start).unwrap(),
+        NotNaN::new(b.end).unwrap()
         );
     rect
 }
 
 impl SweepTrait for BBot{
     type Inner=Bot;
-    type Num=Numf32;
+    type Num=NotNaN<f32>;
 
     ///Destructure into the bounding box and mutable parts.
-    fn get_mut<'a>(&'a mut self)->(&'a AABBox<Numf32>,&'a mut Self::Inner){
+    fn get_mut<'a>(&'a mut self)->(&'a AABBox<NotNaN<f32>>,&'a mut Self::Inner){
         (&self.rect,&mut self.inner)
     }
 
     ///Destructue into the bounding box and inner part.
-    fn get<'a>(&'a self)->(&'a AABBox<Numf32>,&'a Self::Inner){
+    fn get<'a>(&'a self)->(&'a AABBox<NotNaN<f32>>,&'a Self::Inner){
         (&self.rect,&self.inner)
     }
 }
@@ -216,7 +205,7 @@ pub fn collide(prop:&BotProp,a:ColSingle<BBot>,b:ColSingle<BBot>){
                 -(bots[1].vel - cvel).inner_product(&offset)
             ];
 
-    let k=prop.collision_drag/dis;
+    let k=prop.collision_drag/dis_sqr; //why does dis_sqr scale better than dis???
     let drag_force=[
                 offset * (mag[0] * k),
                 offset * (mag[1] * k)
@@ -397,7 +386,7 @@ pub fn create_from_radius(bot_radius:f32,mouse_radius:f32)->(BotProp,MouseProp){
     let bot_prop = BotProp {
         radius: RadiusProp::create(bot_radius),
         collision_push: bot_radius*0.2,
-        collision_drag: bot_radius*0.005,
+        collision_drag: bot_radius*0.01,
         minimum_dis_sqr: 0.000001,
         max_acc:bot_radius*0.3
     }; 
