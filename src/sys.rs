@@ -128,8 +128,8 @@ impl TreeDraw for TreeDrawReal{
         let k:&mut [Bo]=unsafe{std::mem::transmute(verts)};
         dinotree::graphics::update(bot::convert_to_nan(*rect),tree,k,10.0);
         */
-        let width=10.0;
         let height=tree.get_height();
+        let width=1 as f32;
         dinotree::graphics::draw(tree,&mut Bo{verts,height,width},AABBox(*rect));
 
         struct Bo<'a>{
@@ -169,7 +169,7 @@ impl TreeDraw for TreeDrawReal{
         }
 
         fn draw_line(verticies: &mut [Vert;6], p1: &axgeom::Vec2, p2: &axgeom::Vec2, width: f32) {
-            debug_assert!(verticies.len() == 6);
+            //debug_assert!(verticies.len() == 6);
 
             let (p1, p2) = (*p1, *p2);
 
@@ -196,7 +196,7 @@ impl TreeDraw for TreeDrawReal{
             let bottomleft = bottomleft.get();
             let bottomright = bottomright.get();
             
-            let topleft=[*topleft.0,*topleft.0];
+            let topleft=[*topleft.0,*topleft.1];
             let topright=[*topright.0,*topright.1];
             let bottomleft=[*bottomleft.0,*bottomleft.1];
             let bottomright=[*bottomright.0,*bottomright.1];
