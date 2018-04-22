@@ -1,3 +1,4 @@
+#![feature(try_from)]
 extern crate axgeom;
 //extern crate simpdraw;
 extern crate kenmisc;

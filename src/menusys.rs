@@ -16,6 +16,7 @@ use botlib::bot;
 use botlib::bot::BBot;
 use super::*;
 use ascii_num;
+use ordered_float::*;
 
 //TODO put this somewhere else
 struct IteratorCounter<I:Iterator> { iter: I, count: usize }
@@ -98,7 +99,7 @@ mod menu{
         mouse_prop:MouseProp,
         bot_prop:BotProp,
         bots: Vec<BBot>,
-        border: axgeom::Rect<f32>,
+        border: axgeom::Rect<NotNaN<f32>>,
         //treecache:TreeCache2<Numf32>, 
         dim:(usize,usize),
         buttons:[Button;3],
@@ -157,8 +158,10 @@ mod menu{
             //let height=3;
             let num_bots=5000;
 
-            let border=axgeom::Rect::new(0.0,startx as f32,0.0,starty as f32);
-            
+            //let border=axgeom::Rect::new(0.0,startx as f32,0.0,starty as f32);
+            let border= axgeom::Rect::new(NotNaN::new(0.0).unwrap(),NotNaN::new(startx as f32).unwrap(),NotNaN::new(0.0).unwrap(),NotNaN::new(starty as f32).unwrap());
+    
+
             //used as the building block for all positions
             let unit=bot::get_unit(startx,starty);
             

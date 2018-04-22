@@ -99,20 +99,23 @@ pub mod log{
 
 
 
-
+use ordered_float::*;
 pub trait TreeDraw{
     fn get_num_verticies(height:usize)->usize;
-    fn update(rect:&Rect<f32>,tree:&DinoTree<BBot>,verts:&mut [Vert]);
+    fn update(rect:&Rect<NotNaN<f32>>,tree:&DinoTree<BBot>,verts:&mut [Vert]);
 }
 
 pub struct TreeDrawReal{
 }
 impl TreeDraw for TreeDrawReal{
     fn get_num_verticies(height:usize)->usize{
-        dinotree::graphics::get_num_verticies(height)
+        let num_nodes=dinotree::graphics::compute_num_nodes(height);
+        (num_nodes / 2) * 6
+
+        //dinotree::graphics::get_num_verticies(height)
     }
-    fn update(rect:&Rect<f32>,tree:&DinoTree<BBot>,verts:&mut [Vert]){
-        
+    fn update(rect:&Rect<NotNaN<f32>>,tree:&DinoTree<BBot>,verts:&mut [Vert]){
+        /*
         #[derive(Clone,Default,Copy)]
         struct Bo(Vert);
         impl dinotree::graphics::Vertex for Bo{
@@ -124,6 +127,117 @@ impl TreeDraw for TreeDrawReal{
 
         let k:&mut [Bo]=unsafe{std::mem::transmute(verts)};
         dinotree::graphics::update(bot::convert_to_nan(*rect),tree,k,10.0);
+        */
+        let width=10.0;
+        let height=tree.get_height();
+        dinotree::graphics::draw(tree,&mut Bo{verts,height,width},AABBox(*rect));
+
+        struct Bo<'a>{
+            verts:&'a mut [Vert],
+            height:usize,
+            width:f32
+        };
+
+        impl<'a> dinotree::graphics::DividerDrawer for Bo<'a>{
+            type N=NotNaN<f32>;
+
+            fn draw_divider<A:axgeom::AxisTrait>(&mut self,div:Self::N,length:[Self::N;2],depth:usize){
+                  let height=self.height;
+                  let width=self.width;
+
+                  let verts=std::mem::replace(&mut self.verts,&mut []);
+                  //let verts=self.verts;
+
+                  let div=div.into_inner();
+                  let length=[length[0].into_inner(),length[1].into_inner()];
+                  let width = (((height - depth) + 1) as f32) / (height as f32) * width;
+
+                  let vv=if A::new().is_xaxis(){
+                    (axgeom::Vec2::new(div,length[0]),axgeom::Vec2::new(div,length[1]))
+                  }else{
+                    (axgeom::Vec2::new(length[0],div),axgeom::Vec2::new(length[1],div))
+                  };
+
+                  let (f1,f2)=verts.split_at_mut(6);
+                  std::mem::replace(&mut self.verts,f2);
+
+                  use std::convert::TryInto;
+                  fn foo(x: &mut [Vert]) -> &mut [Vert;6] { x.try_into().unwrap() }
+
+                  draw_line(foo(f1),&vv.0,&vv.1,width);
+            }
+        }
+
+        fn draw_line(verticies: &mut [Vert;6], p1: &axgeom::Vec2, p2: &axgeom::Vec2, width: f32) {
+            debug_assert!(verticies.len() == 6);
+
+            let (p1, p2) = (*p1, *p2);
+
+            let offset = p2 - p1;
+            let len_sqr = offset.len_sqr();
+            let norm = if len_sqr > 0.0001 {
+                offset / len_sqr.sqrt()
+            } else {
+                axgeom::Vec2::new(1.0, 0.0)
+            };
+
+            let norm90 = norm.rotate90();
+
+            let xxx = norm90 * width;
+            let yyy = norm90 * -width;
+            let topleft = p1 + xxx;
+            let topright = p1 + yyy;
+            let bottomleft = p2 + xxx;
+            let bottomright = p2 + yyy;
+
+            
+            let topleft = topleft.get();
+            let topright = topright.get();
+            let bottomleft = bottomleft.get();
+            let bottomright = bottomright.get();
+            
+            let topleft=[*topleft.0,*topleft.0];
+            let topright=[*topright.0,*topright.1];
+            let bottomleft=[*bottomleft.0,*bottomleft.1];
+            let bottomright=[*bottomright.0,*bottomright.1];
+
+
+            unsafe {
+                verticies[0].0=topleft;
+                
+
+                verticies[1].0=topright;
+
+                verticies[2].0=bottomleft;
+
+                verticies[3].0=bottomright;
+
+                verticies[4].0=bottomleft;
+
+                verticies[5].0=topright;
+                /*
+                verticies
+                    .get_unchecked_mut(0)
+                    .set_pos(*topleft.0, *topleft.1);
+                verticies
+                    .get_unchecked_mut(1)
+                    .set_pos(*topright.0, *topright.1);
+                verticies
+                    .get_unchecked_mut(2)
+                    .set_pos(*bottomleft.0, *bottomleft.1);
+                verticies
+                    .get_unchecked_mut(3)
+                    .set_pos(*bottomright.0, *bottomright.1);
+                verticies
+                    .get_unchecked_mut(4)
+                    .set_pos(*bottomleft.0, *bottomleft.1);
+                verticies
+                    .get_unchecked_mut(5)
+                    .set_pos(*topright.0, *topright.1);
+                */
+            }
+        }
+
     }
 }
 pub struct TreeNoDraw{
@@ -132,7 +246,7 @@ impl TreeDraw for TreeNoDraw{
     fn get_num_verticies(_height:usize)->usize{
         0
     }
-    fn update(_rect:&Rect<f32>,_tree:&DinoTree<BBot>,_verts:&mut [Vert]){
+    fn update(_rect:&Rect<NotNaN<f32>>,_tree:&DinoTree<BBot>,_verts:&mut [Vert]){
     }
 }
 
@@ -176,7 +290,7 @@ pub struct BotSystem<TDraw:TreeDraw> {
     mouse_prop:MouseProp,
     bots: Vec<BBot>,
     bot_prop:BotProp,
-    border: axgeom::Rect<f32>,
+    border: axgeom::Rect<NotNaN<f32>>,
     axis:dinotree::StartAxis,
     phantom:PhantomData<TDraw>,
     logsys:LogSystem
@@ -267,6 +381,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                             WrapAround::handle_mouse(bot_prop,&mut dyntree,border,&mouse);
                         }
 
+
                         TDraw::update(&self.border,&dyntree,tree_verts);
                         
                     }
@@ -310,7 +425,7 @@ impl<TDraw:TreeDraw> BotSystem<TDraw> {
 
     
     fn new_inner(num_bots:usize,startx:usize,starty:usize) -> BotSystem<TDraw> {
-        let world= axgeom::Rect::new(0.0,startx as f32,0.0,starty as f32);
+        let world= axgeom::Rect::new(NotNaN::new(0.0).unwrap(),NotNaN::new(startx as f32).unwrap(),NotNaN::new(0.0).unwrap(),NotNaN::new(starty as f32).unwrap());
     
         let br=bot::compute_bot_radius(num_bots,&world).unwrap();
         

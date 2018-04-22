@@ -12,7 +12,7 @@ use botlib::bot::BBot;
 use botlib::bot;
 use axgeom::AxisTrait;
 use botlib::bot::convert_aabbox;
-
+use ordered_float::NotNaN;
 use botlib::mouse::Mouse;
 
 
@@ -20,7 +20,7 @@ pub struct WrapAround{}
 
 impl WrapAround{
 
-	pub fn handle_mouse(prop:BotProp,tree:&mut DinoTree<BBot>,rect:&Rect<f32>,mouse:&Mouse){
+	pub fn handle_mouse(prop:BotProp,tree:&mut DinoTree<BBot>,rect:&Rect<NotNaN<f32>>,mouse:&Mouse){
 
 		let mut mm=*mouse;
 		
@@ -28,13 +28,17 @@ impl WrapAround{
 
 		let mut ff=mm.midpoint;
 		
+		//let b=axgeom::Range{start:b.start.into_inner(),end:b.end.into_inner()};
+    
 		for axis in axgeom::AxisIter::new(){
-		
-			if mm.get_rect().get_range(axis).left()<rect.get_range(axis).left(){
-				*ff.get_axis_mut(axis)+=rect.get_range(axis).len();
+			let a=rect.get_range(axis);
+			let aa=axgeom::Range{start:a.start.into_inner(),end:a.end.into_inner()};
+    	
+			if mm.get_rect().get_range(axis).left()<aa.left(){
+				*ff.get_axis_mut(axis)+=aa.len();
 				flipp=true;
-			}else if mm.get_rect().get_range(axis).right()>rect.get_range(axis).right(){
-				*ff.get_axis_mut(axis)-=rect.get_range(axis).len();
+			}else if mm.get_rect().get_range(axis).right()>aa.right(){
+				*ff.get_axis_mut(axis)-=aa.len();
 				flipp=true;
 			}
 		}
@@ -49,7 +53,7 @@ impl WrapAround{
 			&mut |mut a:ColSingle<BBot>|{bot::collide_mouse(&mut a,&prop,mouse);});
 	
 	}
-	pub fn handle(tree:&mut DinoTree<BBot>,rect:&Rect<f32>,max_prop:BotProp){
+	pub fn handle(tree:&mut DinoTree<BBot>,rect:&Rect<NotNaN<f32>>,max_prop:BotProp){
 		
 
 	    
@@ -80,13 +84,20 @@ impl WrapAround{
 		prop:&BotProp,
 		tree:&mut DinoTree<BBot>,
 		width:f32,
-		padding:f32,rect:&Rect<f32>){
+		padding:f32,rect:&Rect<NotNaN<f32>>){
+
+		let a=rect.get_range(axgeom::XAXIS);
+		let b=rect.get_range(axgeom::YAXIS);
+		let rect=Rect::new(a.start.into_inner(),a.end.into_inner(),b.start.into_inner(),b.end.into_inner());
+
+
 
 		let top_d_axis=A::get();
 		let left_r_axis=A::Next::get();
 		let top_down_range=rect.get_range(top_d_axis);
 
 		let top_down_length=rect.get_range(top_d_axis).end-rect.get_range(top_d_axis).start;
+
 
 		let left_right_range=*rect.get_range(left_r_axis).clone().grow(width);
 

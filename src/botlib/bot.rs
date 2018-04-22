@@ -262,14 +262,14 @@ pub fn collide_mouse(bot:&mut ColSingle<BBot>,prop:&BotProp,mouse:&Mouse){
     }
 }
 
-pub fn update_bot(bot:&mut BBot,prop:&BotProp,rect:&axgeom::Rect<f32>) {
+pub fn update_bot(bot:&mut BBot,prop:&BotProp,rect:&axgeom::Rect<NotNaN<f32>>) {
     {
         //let bot=&mut bota.val;
 
         for j in axgeom::AxisIter::new() {
 
-            let a=rect.get_range(j).start;
-            let b=rect.get_range(j).end;
+            let a=rect.get_range(j).start.into_inner();
+            let b=rect.get_range(j).end.into_inner();
 
             let mut new_pos=bot.inner.pos.clone();
 
@@ -314,9 +314,11 @@ pub fn update_bot(bot:&mut BBot,prop:&BotProp,rect:&axgeom::Rect<f32>) {
     
 
 }
-pub fn compute_bot_radius(num_bots: usize, world: &axgeom::Rect<f32>) -> Option<f32> {
+pub fn compute_bot_radius(num_bots: usize, world: &axgeom::Rect<NotNaN<f32>>) -> Option<f32> {
     let a=world.get_range(axgeom::XAXIS);
     let b=world.get_range(axgeom::YAXIS);
+    let a=axgeom::Range{start:a.start.into_inner(),end:a.end.into_inner()};
+    let b=axgeom::Range{start:b.start.into_inner(),end:b.end.into_inner()};
     //println!("{:?}",(a,b));
     let width=a.end-a.start;
     let height=b.end-b.start;
@@ -404,11 +406,13 @@ pub fn create_from_radius(bot_radius:f32,mouse_radius:f32)->(BotProp,MouseProp){
 }
 
 
-pub fn create_bots_spaced<X,Y:Fn(&axgeom::Vec2)->X>(world:&axgeom::Rect<f32>,num_bot:usize,spacing:f32,func:Y)->Vec<X>{
+pub fn create_bots_spaced<X,Y:Fn(&axgeom::Vec2)->X>(world:&axgeom::Rect<NotNaN<f32>>,num_bot:usize,spacing:f32,func:Y)->Vec<X>{
 
     let a=world.get_range(axgeom::XAXIS);
     let b=world.get_range(axgeom::YAXIS);
-
+    let a=axgeom::Range{start:a.start.into_inner(),end:a.end.into_inner()};
+    let b=axgeom::Range{start:b.start.into_inner(),end:b.end.into_inner()};
+    
     let start = axgeom::Vec2::new(a.start,b.start) + axgeom::Vec2::new(spacing, spacing);
     //let spacing = bot_prop.radius.radius2();
 
@@ -432,7 +436,7 @@ pub fn create_bots_spaced<X,Y:Fn(&axgeom::Vec2)->X>(world:&axgeom::Rect<f32>,num
 }
 
 
-pub fn update(bots:&mut [BBot],prop:BotProp,rect:&axgeom::Rect<f32>) {
+pub fn update(bots:&mut [BBot],prop:BotProp,rect:&axgeom::Rect<NotNaN<f32>>) {
     //self.last_man.clone_from_slice(&self.man);
 
     for bot in bots.iter_mut() {
@@ -442,7 +446,7 @@ pub fn update(bots:&mut [BBot],prop:BotProp,rect:&axgeom::Rect<f32>) {
 
 
 
-pub fn create_bots(num_bot:usize, world:&axgeom::Rect<f32>, bot_prop: &BotProp)->Vec<BBot>{
+pub fn create_bots(num_bot:usize, world:&axgeom::Rect<NotNaN<f32>>, bot_prop: &BotProp)->Vec<BBot>{
     let man={
         let pp=&bot_prop;
         create_bots_spaced(world,num_bot,bot_prop.radius.radius2(),|vec:&axgeom::Vec2|{
