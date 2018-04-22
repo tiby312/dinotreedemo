@@ -332,9 +332,9 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
 
                 {
 
-                    let (mut dyntree,_bag)=DinoTree::new_debug(bots,self.axis);
+                    let (mut dyntree,_bag)=DinoTree::new_seq_debug(bots,self.axis);
 
-                    self.logsys.rebal_log.write_data(&_bag.into_vec());
+                    self.logsys.rebal_log.write_data(&_bag);
 
 
                     //the dynamic tree made a copy of the bots.
@@ -353,7 +353,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                             bot::collide(&bot_prop,a,b);
                         };
                         
-                        let _v=dyntree.intersect_every_pair_debug(a);
+                        let _v=dyntree.intersect_every_pair_seq_debug(a);
                         
                         /*
                         let a=AABBox::new((Numf32::from_f32(0.0),Numf32::from_f32(100.0)),(Numf32::from_f32(0.0),Numf32::from_f32(100.0)));
@@ -362,7 +362,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                         });
                         */
 
-                        self.logsys.colfind_log.write_data(&_v.into_vec());
+                        self.logsys.colfind_log.write_data(&_v);
 
                         self.logsys.general_log.write(log::Typ::Query,query.elapsed());
                         
