@@ -13,7 +13,7 @@ use botlib::mouse::MouseProp;
 //use axgeom::YAXIS_S;
 //use sys::TreeNoDraw;
 use botlib::bot;
-use botlib::bot::BBot;
+use botlib::bot::Bot;
 use super::*;
 use ascii_num;
 use ordered_float::*;
@@ -49,7 +49,7 @@ impl<I: Iterator> Iterator for IteratorCounter<I> {
 struct GameState(Box<BotSysTrait>);
 
 impl MenuState for GameState{
-    fn step(&mut self, poses: &[axgeom::Vec2],a:&mut [Vert])->(Option<Box<MenuState>>,(Option<[f32;3]>,bool)){
+    fn step(&mut self, poses: &[vec::Vec2],a:&mut [Vert])->(Option<Box<MenuState>>,(Option<[f32;3]>,bool)){
         self.0.step(poses,a);
         (None,(None,true))
     }    
@@ -66,7 +66,7 @@ impl MenuState for GameState{
 }
 
 trait MenuState{
-    fn step(&mut self, poses: &[axgeom::Vec2],v:&mut [Vert])->(Option<Box<MenuState>>,(Option<[f32;3]>,bool));
+    fn step(&mut self, poses: &[vec::Vec2],v:&mut [Vert])->(Option<Box<MenuState>>,(Option<[f32;3]>,bool));
     //fn get_verticies(&self,v:&mut [Vert]); 
     fn num_verticies(&self)->usize;
 }
@@ -98,9 +98,8 @@ mod menu{
         bot_graphics:BotLibGraphics,
         mouse_prop:MouseProp,
         bot_prop:BotProp,
-        bots: Vec<BBot>,
+        bots: Vec<Bot>,
         border: axgeom::Rect<NotNaN<f32>>,
-        //treecache:TreeCache2<Numf32>, 
         dim:(usize,usize),
         buttons:[Button;3],
         color_button:Button,
@@ -125,7 +124,7 @@ mod menu{
         fn new()->Clicker{
             Clicker{there_was_finger:false,there_is_finger:false}
         }
-        fn update(&mut self,dim:&axgeom::Rect<f32>,poses:&[axgeom::Vec2])->bool{
+        fn update(&mut self,dim:&axgeom::Rect<f32>,poses:&[vec::Vec2])->bool{
 
             for i in poses.iter(){
                 if dim.contains_vec(i){
@@ -176,7 +175,7 @@ mod menu{
 
             
             let buttons={
-                let mut v=axgeom::Vec2::new(unit*5.0,starty as f32-unit*30.0);
+                let mut v=vec::Vec2::new(unit*5.0,starty as f32-unit*30.0);
                 
                 let b1=Button::new(v,ascii_num::get_misc(0),unit*2.0);
                 *(v.get_mut().0)+=unit*20.0;
@@ -187,11 +186,11 @@ mod menu{
                 [b1,b2,b3]
             };
 
-            let kk=axgeom::Vec2::new(unit*5.0,starty as f32-unit*90.0);
+            let kk=vec::Vec2::new(unit*5.0,starty as f32-unit*90.0);
             let color_button=Button::new(kk,ascii_num::get_misc(3),unit*2.0);
 
 
-            let kk=axgeom::Vec2::new(unit*5.0,starty as f32-unit*70.0);    
+            let kk=vec::Vec2::new(unit*5.0,starty as f32-unit*70.0);    
             let debug_button=OnOffButton::new(kk,
                     ascii_num::get_misc(4),
                     ascii_num::get_misc(5),
@@ -200,7 +199,7 @@ mod menu{
             let numberthing={
                 let x=startx as f32-unit*20.0;
                 let y=starty as f32-unit*50.0;
-                NumberThing::new(unit*15.0,unit*2.0,6000,axgeom::Vec2::new(x,y))
+                NumberThing::new(unit*15.0,unit*2.0,6000,vec::Vec2::new(x,y))
             };
 
             let col=COLS[0];
@@ -226,7 +225,7 @@ mod menu{
         }
     }
     impl MenuState for MenuSystem{
-        fn step(&mut self, poses: &[axgeom::Vec2],verts:&mut[Vert])->(Option<Box<MenuState>>,(Option<[f32;3]>,bool)){
+        fn step(&mut self, poses: &[vec::Vec2],verts:&mut[Vert])->(Option<Box<MenuState>>,(Option<[f32;3]>,bool)){
             //let bot_prop=&self.bot_prop;
             let bots=&mut self.bots;
             //let border=&self.border;
@@ -282,7 +281,7 @@ mod menu{
                 //let steps=bb.steps_taken();
             
                 for b in bb{
-                    b.inner.pos=axgeom::Vec2::new(-100.0,-100.0);
+                    b.inner.pos=vec::Vec2::new(-100.0,-100.0);
                     b.update_box(&0.0);
                 }
 
@@ -322,7 +321,7 @@ impl MenuGame{
 
     ///Pass it the touch posisitons based.
     ///Returns desired color if different.
-	pub fn step(&mut self,poses:&[axgeom::Vec2],v:&mut [Vert])->(Option<[f32;3]>,bool){
+	pub fn step(&mut self,poses:&[vec::Vec2],v:&mut [Vert])->(Option<[f32;3]>,bool){
 		let (j,cols)=self.state.step(poses,v);
 
         match j{

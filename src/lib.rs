@@ -1,5 +1,6 @@
 #![feature(try_from)]
 extern crate axgeom;
+extern crate compt;
 //extern crate simpdraw;
 extern crate kenmisc;
 extern crate ordered_float;
@@ -7,13 +8,14 @@ extern crate ordered_float;
 extern crate rayon;
 extern crate ascii_num;
 extern crate dinotree;
+extern crate dinotree_inner;
 
 mod botlib;
 mod sys;
 mod menusys;
 mod wrap_around;
 mod menu_primitives;
-
+mod vec;
 
 pub use menusys::MenuGame;
 

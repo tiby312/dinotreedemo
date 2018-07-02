@@ -5,7 +5,7 @@ use super::mouse::Mouse;
 use ordered_float::NotNaN;
 use axgeom::Rect;
 
-
+use vec::Vec2;
 use dinotree::*;
 
 
@@ -20,25 +20,31 @@ pub struct BotProp {
 }
 
 
-
-
-#[derive(Clone,Debug)]
-pub struct BBot{
-    pub rect:AABBox<NotNaN<f32>>,
-    pub inner:Bot
-}
-
 #[derive(Copy,Clone,Debug)]
 pub struct Bot{
-    pub pos: axgeom::Vec2,
-    pub vel: axgeom::Vec2,
-    pub acc: axgeom::Vec2,
+    pub pos: Vec2,
+    pub vel: Vec2,
+    pub acc: Vec2,
 }
-
+impl Bot{
+    pub fn create_bbox(&self,radius:f32)->Rect<NotNaN<f32>>{
+        let p=self.pos.0;
+        let r=radius;
+        let r=Rect::new(p[0]-r,p[0]+r,p[1]-r,p[1]+r);
+        convert_to_nan(r)
+    }
+    pub fn new(a:Vec2)->Bot{
+        let pos=a;
+        let vel=Vec2([0.0;2]);
+        let acc=vel;
+        Bot{pos,vel,acc}
+    }
+}
+/*
 impl BBot{
-    fn new(posa:&axgeom::Vec2,rect:AABBox<NotNaN<f32>>)->BBot{
+    fn new(posa:&Vec2,rect:AABBox<NotNaN<f32>>)->BBot{
         let pos=*posa;
-        let vel=axgeom::Vec2::new(0.0,0.0);
+        let vel=Vec2::new(0.0,0.0);
         let acc=vel;
         BBot{inner:Bot{pos,vel,acc},rect}
     }
@@ -49,42 +55,32 @@ impl BBot{
         self.rect=convert_aabbox(convert_to_nan(r));
     }
 }
+*/
 
-pub fn convert_aabbox(r:Rect<NotNaN<f32>>)->AABBox<NotNaN<f32>>{
 
-    let a=r.get_range2::<axgeom::XAXISS>();
-    let b=r.get_range2::<axgeom::YAXISS>();
-    
-    AABBox::new((a.start,a.end),(b.start,b.end))
-}
 pub fn convert_to_nan(r:Rect<f32>)->Rect<NotNaN<f32>>{
 
-    let a=r.get_range2::<axgeom::XAXISS>();
-    let b=r.get_range2::<axgeom::YAXISS>();
+    let a=r.get_range(axgeom::XAXISS);
+    let b=r.get_range(axgeom::YAXISS);
     
     let rect=Rect::new(
-        NotNaN::new(a.start).unwrap(),
-        NotNaN::new(a.end).unwrap(),
-        NotNaN::new(b.start).unwrap(),
-        NotNaN::new(b.end).unwrap()
+        NotNaN::new(a.left).unwrap(),
+        NotNaN::new(a.right).unwrap(),
+        NotNaN::new(b.left).unwrap(),
+        NotNaN::new(b.right).unwrap()
         );
     rect
 }
-
-impl SweepTrait for BBot{
-    type Inner=Bot;
+/*
+impl HasAabb for BBot{
     type Num=NotNaN<f32>;
 
     ///Destructure into the bounding box and mutable parts.
-    fn get_mut<'a>(&'a mut self)->(&'a AABBox<NotNaN<f32>>,&'a mut Self::Inner){
-        (&self.rect,&mut self.inner)
-    }
-
-    ///Destructue into the bounding box and inner part.
-    fn get<'a>(&'a self)->(&'a AABBox<NotNaN<f32>>,&'a Self::Inner){
-        (&self.rect,&self.inner)
+    fn get(&self)->&Rect<NotNaN<f32>>{
+        &self.rect
     }
 }
+*/
 
 //Exists so that wraparound can implement a custom bot
 //TODO move to wrap around?
@@ -125,9 +121,8 @@ pub trait BotMovementTrait{
 */
 
 
-pub fn collide(prop:&BotProp,a:ColSingle<BBot>,b:ColSingle<BBot>){
-   
-    let bots=[a.inner,b.inner];
+pub fn collide(prop:&BotProp,a:&mut Bot,b:&mut Bot){
+    let bots=[a,b];
 
 
     let offset = bots[0].pos - bots[1].pos;
@@ -157,7 +152,7 @@ pub fn collide(prop:&BotProp,a:ColSingle<BBot>,b:ColSingle<BBot>){
     let dis = dis_sqr.sqrt();
 
     if dis.is_nan(){
-        let vec=axgeom::Vec2::new(prop.max_acc,0.0); //TODO dont hardcode. and test
+        let vec=Vec2::new(prop.max_acc,0.0); //TODO dont hardcode. and test
         bots[0].acc+=vec;//apply_force(&vec);
         bots[1].acc+=-vec;//.apply_force(&-vec);
         return;
@@ -226,11 +221,11 @@ pub fn collide(prop:&BotProp,a:ColSingle<BBot>,b:ColSingle<BBot>){
 
 
 
-pub fn collide_mouse(bot:&mut ColSingle<BBot>,prop:&BotProp,mouse:&Mouse){
+pub fn collide_mouse(bot:&mut Bot,prop:&BotProp,mouse:&Mouse){
     //let stuff=bot.0;
     //let val=bot.1;
 
-    let offset = *mouse.get_midpoint() - bot.inner.pos;
+    let offset = *mouse.get_midpoint() - bot.pos;
     let dis_sqr = offset.len_sqr();
     
     let sum_rad=mouse.get_radius() + prop.radius.radius();
@@ -257,30 +252,36 @@ pub fn collide_mouse(bot:&mut ColSingle<BBot>,prop:&BotProp,mouse:&Mouse){
 
         let acc = blap;// / prop.mass;
         */
-        bot.inner.acc+=-push_force;
+        bot.acc+=-push_force;
         //bot.apply_force(&acc);
     }
 }
 
-pub fn update_bot(bot:&mut BBot,prop:&BotProp,rect:&axgeom::Rect<NotNaN<f32>>) {
+pub fn update_bot(bot:&mut Bot,prop:&BotProp,rect:&axgeom::Rect<NotNaN<f32>>) {
     {
         //let bot=&mut bota.val;
 
-        for j in axgeom::AxisIter::new() {
+        macro_rules! bla{
+            ($axis:ident)=>{
+                let j=$axis;
+                let a=rect.get_range(j).left.into_inner();
+                let b=rect.get_range(j).right.into_inner();
 
-            let a=rect.get_range(j).start.into_inner();
-            let b=rect.get_range(j).end.into_inner();
+                let mut new_pos=bot.pos.clone();
 
-            let mut new_pos=bot.inner.pos.clone();
-
-            if *bot.inner.pos.get_axis(j) < a {
-                *new_pos.get_axis_mut(j) = b;
+                if *bot.pos.get_axis(j) < a {
+                    *new_pos.get_axis_mut(j) = b;
+                }
+                if *bot.pos.get_axis(j) > b {
+                    *new_pos.get_axis_mut(j) = a;
+                }
+                bot.pos=new_pos;
             }
-            if *bot.inner.pos.get_axis(j) > b {
-                *new_pos.get_axis_mut(j) = a;
-            }
-            bot.inner.pos=new_pos;
         }
+        use axgeom::XAXISS;
+        use axgeom::YAXISS;
+        bla!(XAXISS);
+        bla!(YAXISS);
 
         //if velocity is nan, just set it to zero and conitnue. so we dont pollute the position to also be nan.
         /*
@@ -289,39 +290,39 @@ pub fn update_bot(bot:&mut BBot,prop:&BotProp,rect:&axgeom::Rect<NotNaN<f32>>) {
         }
         */
 
-        let acc_sqr=bot.inner.acc.len_sqr();
+        let acc_sqr=bot.acc.len_sqr();
         if acc_sqr>=prop.max_acc.powi(2){
-            bot.inner.acc=bot.inner.acc*(prop.max_acc/acc_sqr);
+            bot.acc=bot.acc*(prop.max_acc/acc_sqr);
         }
         
         {
-            let mut kk=bot.inner.vel;
-            kk+=bot.inner.acc;
-            bot.inner.vel=kk;    
+            let mut kk=bot.vel;
+            kk+=bot.acc;
+            bot.vel=kk;    
         }
         {
-            let mut kk=bot.inner.pos;
-            kk+=bot.inner.vel;
-            bot.inner.pos=kk;
+            let mut kk=bot.pos;
+            kk+=bot.vel;
+            bot.pos=kk;
         }
 
-        bot.inner.acc.set(0.0,0.0);
+        bot.acc.0=[0.0;2];
    
     }
     //TODO inefficient?
     //let pos=bota.val.pos;
-    bot.update_box(&prop.radius.radius());   
+    //bot.update_box(&prop.radius.radius());   
     
 
 }
 pub fn compute_bot_radius(num_bots: usize, world: &axgeom::Rect<NotNaN<f32>>) -> Option<f32> {
-    let a=world.get_range(axgeom::XAXIS);
-    let b=world.get_range(axgeom::YAXIS);
-    let a=axgeom::Range{start:a.start.into_inner(),end:a.end.into_inner()};
-    let b=axgeom::Range{start:b.start.into_inner(),end:b.end.into_inner()};
+    let a=world.get_range(axgeom::XAXISS);
+    let b=world.get_range(axgeom::YAXISS);
+    let a=axgeom::Range{left:a.left.into_inner(),right:a.right.into_inner()};
+    let b=axgeom::Range{left:b.left.into_inner(),right:b.right.into_inner()};
     //println!("{:?}",(a,b));
-    let width=a.end-a.start;
-    let height=b.end-b.start;
+    let width=a.right-a.left;
+    let height=b.right-b.left;
     //println!("width:height={:?}",(width,height));
     let aspect_ratio = width / height;
 
@@ -406,14 +407,14 @@ pub fn create_from_radius(bot_radius:f32,mouse_radius:f32)->(BotProp,MouseProp){
 }
 
 
-pub fn create_bots_spaced<X,Y:Fn(&axgeom::Vec2)->X>(world:&axgeom::Rect<NotNaN<f32>>,num_bot:usize,spacing:f32,func:Y)->Vec<X>{
+pub fn create_bots_spaced<X,Y:Fn(&Vec2)->X>(world:&axgeom::Rect<NotNaN<f32>>,num_bot:usize,spacing:f32,func:Y)->Vec<X>{
 
-    let a=world.get_range(axgeom::XAXIS);
-    let b=world.get_range(axgeom::YAXIS);
-    let a=axgeom::Range{start:a.start.into_inner(),end:a.end.into_inner()};
-    let b=axgeom::Range{start:b.start.into_inner(),end:b.end.into_inner()};
+    let a=world.get_range(axgeom::XAXISS);
+    let b=world.get_range(axgeom::YAXISS);
+    let a=axgeom::Range{left:a.left.into_inner(),right:a.right.into_inner()};
+    let b=axgeom::Range{left:b.left.into_inner(),right:b.right.into_inner()};
     
-    let start = axgeom::Vec2::new(a.start,b.start) + axgeom::Vec2::new(spacing, spacing);
+    let start = Vec2::new(a.left,b.left) + Vec2::new(spacing, spacing);
     //let spacing = bot_prop.radius.radius2();
 
     let mut cursor = start.clone();
@@ -421,11 +422,11 @@ pub fn create_bots_spaced<X,Y:Fn(&axgeom::Vec2)->X>(world:&axgeom::Rect<NotNaN<f
     let mut man=Vec::with_capacity(num_bot);
     for _ in 0..num_bot{
         let bb=func(&cursor);
-        cursor += axgeom::Vec2::new(spacing, 0.0);
-        if *cursor.get().0 > a.end {
-            *cursor.get_mut().0 = *start.get().0;
-            cursor += axgeom::Vec2::new(0.0, spacing);
-            if *cursor.get().1>b.end{
+        cursor += Vec2::new(spacing, 0.0);
+        if cursor.0[0] > a.right {
+            cursor.0[0] = start.0[0];
+            cursor += Vec2::new(0.0, spacing);
+            if cursor.0[1]>b.right{
                 cursor=start;
             }
         }
@@ -436,7 +437,7 @@ pub fn create_bots_spaced<X,Y:Fn(&axgeom::Vec2)->X>(world:&axgeom::Rect<NotNaN<f
 }
 
 
-pub fn update(bots:&mut [BBot],prop:BotProp,rect:&axgeom::Rect<NotNaN<f32>>) {
+pub fn update(bots:&mut [Bot],prop:BotProp,rect:&axgeom::Rect<NotNaN<f32>>) {
     //self.last_man.clone_from_slice(&self.man);
 
     for bot in bots.iter_mut() {
@@ -446,13 +447,12 @@ pub fn update(bots:&mut [BBot],prop:BotProp,rect:&axgeom::Rect<NotNaN<f32>>) {
 
 
 
-pub fn create_bots(num_bot:usize, world:&axgeom::Rect<NotNaN<f32>>, bot_prop: &BotProp)->Vec<BBot>{
+pub fn create_bots(num_bot:usize, world:&axgeom::Rect<NotNaN<f32>>, bot_prop: &BotProp)->Vec<Bot>{
     let man={
         let pp=&bot_prop;
-        create_bots_spaced(world,num_bot,bot_prop.radius.radius2(),|vec:&axgeom::Vec2|{
-            
-            let r=axgeom::Rect::from_pos_and_radius(vec,pp.radius.radius());   
-            BBot::new(vec,convert_aabbox(convert_to_nan(r)))
+        create_bots_spaced(world,num_bot,bot_prop.radius.radius2(),|vec:&Vec2|{
+        
+            Bot::new(*vec)
             //BBot{val:b,rect:convert_to_nan(r)}
             //BBot::new(b,r)
         })

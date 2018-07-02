@@ -4,24 +4,25 @@ use botlib::bot::BotProp;
 
 
 use dinotree::*;
+use dinotree;
 //use dinotree::Rects;
 //use dinotree::support::Numf32;
 use dinotree::support;
 
-use botlib::bot::BBot;
+use botlib::bot::Bot;
 use botlib::bot;
 use axgeom::AxisTrait;
-use botlib::bot::convert_aabbox;
+//use botlib::bot::convert_aabbox;
 use ordered_float::NotNaN;
 use botlib::mouse::Mouse;
-
+use sys;
 
 
 pub struct WrapAround{}
 
 impl WrapAround{
 
-	pub fn handle_mouse(prop:BotProp,tree:&mut DinoTree<BBot>,rect:&Rect<NotNaN<f32>>,mouse:&Mouse){
+	pub fn handle_mouse(prop:BotProp,tree:&mut sys::Tree,rect:&Rect<NotNaN<f32>>,mouse:&Mouse){
 
 		let mut mm=*mouse;
 		
@@ -31,18 +32,25 @@ impl WrapAround{
 		
 		//let b=axgeom::Range{start:b.start.into_inner(),end:b.end.into_inner()};
     
-		for axis in axgeom::AxisIter::new(){
-			let a=rect.get_range(axis);
-			let aa=axgeom::Range{start:a.start.into_inner(),end:a.end.into_inner()};
-    	
-			if mm.get_rect().get_range(axis).left()<aa.left(){
-				*ff.get_axis_mut(axis)+=aa.len();
-				flipp=true;
-			}else if mm.get_rect().get_range(axis).right()>aa.right(){
-				*ff.get_axis_mut(axis)-=aa.len();
-				flipp=true;
+		macro_rules! bla{
+			($axis:ident)=>{
+				let axis=$axis;
+				let a=rect.get_range(axis);
+				let aa=axgeom::Range{start:a.start.into_inner(),end:a.end.into_inner()};
+	    	
+				if mm.get_rect().get_range(axis).left()<aa.left(){
+					*ff.get_axis_mut(axis)+=aa.len();
+					flipp=true;
+				}else if mm.get_rect().get_range(axis).right()>aa.right(){
+					*ff.get_axis_mut(axis)-=aa.len();
+					flipp=true;
+				}
 			}
 		}
+		use axgeom::XAXISS;
+		use axgeom::YAXISS;
+		bla!(XAXISS);
+		bla!(YAXISS);
 
 		if !flipp{
 			return;
@@ -50,11 +58,11 @@ impl WrapAround{
 
 		mm.move_to(&ff);    
 
-		tree.rects().for_all_in_rect(&convert_aabbox(bot::convert_to_nan(*mm.get_rect())),
-			&mut |mut a:ColSingle<BBot>|{bot::collide_mouse(&mut a,&prop,mouse);});
+		tree.rects().for_all_in_rect(&bot::convert_to_nan(*mm.get_rect()),
+			&mut |a|{bot::collide_mouse(&mut a,&prop,mouse);});
 	
 	}
-	pub fn handle(tree:&mut DinoTree<BBot>,rect:&Rect<NotNaN<f32>>,max_prop:BotProp){
+	pub fn handle(tree:&mut sys::Tree,rect:&Rect<NotNaN<f32>>,max_prop:BotProp){
 		
 
 	    
@@ -83,12 +91,12 @@ impl WrapAround{
 
 	fn handle2<A:AxisTrait>(
 		prop:&BotProp,
-		tree:&mut DinoTree<BBot>,
+		tree:&mut sys::Tree,
 		width:f32,
 		padding:f32,rect:&Rect<NotNaN<f32>>){
 
-		let a=rect.get_range(axgeom::XAXIS);
-		let b=rect.get_range(axgeom::YAXIS);
+		let a=rect.get_range(axgeom::XAXISS);
+		let b=rect.get_range(axgeom::YAXISS);
 		let rect=Rect::new(a.start.into_inner(),a.end.into_inner(),b.start.into_inner(),b.end.into_inner());
 
 
@@ -120,22 +128,25 @@ impl WrapAround{
 			rr
 		};
 
-		let rect1=convert_aabbox(bot::convert_to_nan(rect1));
-		let rect2=convert_aabbox(bot::convert_to_nan(rect2));
+		let rect1=bot::convert_to_nan(rect1);
+		let rect2=bot::convert_to_nan(rect2);
 
-		let bo=|a:ColSingle<BBot>,b:ColSingle<BBot>|{
+		let bo=|a:&mut dinotree::support::BBox<Bot,NotNaN<f32>>,b:&mut dinotree::support::BBox<Bot,NotNaN<f32>>|{
 
 			    let mut copy_botstuff=a.inner.clone();
 			    let mut pos=a.inner.pos.clone();
 			    *pos.get_axis_mut(top_d_axis)+=top_down_length;
 			    copy_botstuff.pos=pos;
 			     
-			    //let cc_copy=ColPair{a:(a.0,&mut copy_botstuff),b:(b.0,b.1)};
-			    let cca=ColSingle{rect:a.rect,inner:&mut copy_botstuff};
-			    let ccb=ColSingle{rect:b.rect,inner:b.inner};
-			    bot::collide(&prop,cca,ccb);
+
+			    //let cca=ColSingle{rect:a.rect,inner:&mut copy_botstuff};
+			    //let ccb=ColSingle{rect:b.rect,inner:b.inner};
+			    
+			    //bot::collide(&prop,cca,ccb);
+			    bot::collide(&prop,&mut copy_botstuff,b);
+		
 		};
-		support::collide_two_rect_parallel::<A::Next,_,_,_>(tree,&rect1,&rect2,bo);
+		dinotree::multirect::collide_two_rect_parallel::<A::Next,_,_,_>(tree,&rect1,&rect2,bo);
 		
 	}
 	

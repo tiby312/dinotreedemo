@@ -13,10 +13,10 @@ use axgeom::XAXISS;
 use axgeom::YAXISS;
 //use sys::TreeNoDraw;
 //use botlib::bot;
-use botlib::bot::BBot;
+use botlib::bot::Bot;
 //use super::*;
 use ascii_num;
-
+use vec::Vec2;
 
 pub struct OnOffButton{
     on_but:Button,
@@ -26,7 +26,7 @@ pub struct OnOffButton{
 }
 
 impl OnOffButton{
-    pub fn new(topleft:axgeom::Vec2,poses_off:Vec<(usize,usize)>,poses_on:Vec<(usize,usize)>,spacing:f32)->OnOffButton{
+    pub fn new(topleft:Vec2,poses_off:Vec<(usize,usize)>,poses_on:Vec<(usize,usize)>,spacing:f32)->OnOffButton{
         let off_but=Button::new(topleft,poses_off,spacing);
         let on_but=Button::new(topleft,poses_on,spacing);
         
@@ -44,7 +44,7 @@ impl OnOffButton{
         self.on=state;
     }
 
-    pub fn draw<'a,I:Iterator<Item=&'a mut BBot>>(&self,bb:&mut I){
+    pub fn draw<'a,I:Iterator<Item=&'a mut Bot>>(&self,bb:&mut I){
         if self.on{
             self.on_but.draw(bb);
         }else{
@@ -66,7 +66,7 @@ impl Button{
     pub fn get_dim(&self)->&axgeom::Rect<f32>{
         &self.padding
     }
-    pub fn new(topleft:axgeom::Vec2,poses:Vec<(usize,usize)>,spacing:f32)->Button{
+    pub fn new(topleft:Vec2,poses:Vec<(usize,usize)>,spacing:f32)->Button{
         let m=poses.iter().fold((0,0), |acc, &x| {(acc.0.max(x.0),acc.1.max(x.1))});
         
         let dimx=m.0 as f32*spacing;
@@ -78,7 +78,7 @@ impl Button{
         padding.grow(spacing*2.0);
         Button{poses:poses,dim,padding,spacing}
     }
-    pub fn draw<'a,I:Iterator<Item=&'a mut BBot>>(&self,bb:&mut I){
+    pub fn draw<'a,I:Iterator<Item=&'a mut Bot>>(&self,bb:&mut I){
         for pos in self.poses.iter(){
             //use dinotree::SweepTrait;
            
@@ -90,13 +90,13 @@ impl Button{
             let x=pos.0 as f32;
             let y=pos.1 as f32;
             
-            k.inner.vel=axgeom::Vec2::new(0.0,0.0);
-            k.inner.acc=axgeom::Vec2::new(0.0,0.0);
+            k.inner.vel=Vec2::new(0.0,0.0);
+            k.inner.acc=Vec2::new(0.0,0.0);
 
             let dx=self.dim.get_range2::<XAXISS>();
             let yx=self.dim.get_range2::<YAXISS>();
 
-            k.inner.pos=axgeom::Vec2::new(dx.start+x*self.spacing,yx.start+y*self.spacing);
+            k.pos=Vec2::new(dx.start+x*self.spacing,yx.start+y*self.spacing);
         }
     }
 }
@@ -107,11 +107,11 @@ pub struct NumberThing{
     pixel_spacing:f32,
     digit_spacing:f32,
     number:usize,
-    top_right:axgeom::Vec2
+    top_right:Vec2
 }
 
 impl NumberThing{
-    pub fn new(digit_spacing:f32,pixel_spacing:f32,number:usize,top_right:axgeom::Vec2)->NumberThing{
+    pub fn new(digit_spacing:f32,pixel_spacing:f32,number:usize,top_right:Vec2)->NumberThing{
         NumberThing{digits:ascii_num::get_coords(number),pixel_spacing,digit_spacing,number,top_right}
     }
     pub fn update_number(&mut self,number:usize){
@@ -121,7 +121,7 @@ impl NumberThing{
     pub fn get_number(&self)->usize{
         self.number
     }
-    pub fn draw<'a,I:Iterator<Item=&'a mut BBot>>(&self,bb:&mut I){
+    pub fn draw<'a,I:Iterator<Item=&'a mut Bot>>(&self,bb:&mut I){
         //use dinotree::SweepTrait;
         //use ascii_num;
         for (i,digit) in self.digits.iter().rev().enumerate(){
@@ -133,13 +133,13 @@ impl NumberThing{
 
                 let x=pos.0 as f32;
                 let y=pos.1 as f32;
-                k.inner.vel=axgeom::Vec2::new(0.0,0.0);
-                k.inner.acc=axgeom::Vec2::new(0.0,0.0);
+                k.vel=Vec2::new(0.0,0.0);
+                k.acc=Vec2::new(0.0,0.0);
 
                 let tr=self.top_right.get();
                 let ds=self.digit_spacing;
                 let ps=self.pixel_spacing;
-                k.inner.pos=axgeom::Vec2::new(tr.0-i*ds+x*ps,tr.1+y*ps);
+                k.pos=Vec2::new(tr.0-i*ds+x*ps,tr.1+y*ps);
             }
         }
 

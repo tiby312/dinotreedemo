@@ -1,12 +1,13 @@
 use axgeom;
 use botlib::bot::BotProp;
-use botlib::bot::BBot;
+use botlib::bot::Bot;
 use Vert;
+use vec::Vec2;
 
 pub struct BotLibGraphics{
-    p1:axgeom::Vec2,
-    p2:axgeom::Vec2,
-    p3:axgeom::Vec2
+    p1:Vec2,
+    p2:Vec2,
+    p3:Vec2
 }
 
 
@@ -19,13 +20,13 @@ impl BotLibGraphics{
         //let p2 = axgeom::Vec2::new(-z, -z);
         //let p3 = axgeom::Vec2::new(-z, z);
 
-        let mut p1=axgeom::Vec2::new(3.0,2.0);
+        let mut p1=Vec2::new(3.0,2.0);
         p1*=r/p1.len();
 
-        let mut p2=axgeom::Vec2::new(-3.0,2.0);
+        let mut p2=Vec2::new(-3.0,2.0);
         p2*=r/p2.len();
 
-        let mut p3=axgeom::Vec2::new(0.0,-1.0);
+        let mut p3=Vec2::new(0.0,-1.0);
         p3*=r/p3.len();
 
         BotLibGraphics{p1:p1,p2:p2,p3:p3}
@@ -34,7 +35,7 @@ impl BotLibGraphics{
         num_bot*3
     }
 
-    pub fn update(&self,prop:&BotProp,bots:&[BBot],verticies:&mut [Vert]){
+    pub fn update(&self,prop:&BotProp,bots:&[Bot],verticies:&mut [Vert]){
         assert!(Self::get_num_verticies(bots.len())<=verticies.len());
 		for (a,b) in bots.iter().enumerate()
 		{	
@@ -42,7 +43,7 @@ impl BotLibGraphics{
         }
     }
 
-    fn update_triangles(&self,_prop:&BotProp,bot_ind: usize, bot: &BBot, verticies: &mut [Vert]) {
+    fn update_triangles(&self,_prop:&BotProp,bot_ind: usize, bot: &Bot, verticies: &mut [Vert]) {
 
         let i = bot_ind as usize * 3;
 
@@ -57,7 +58,7 @@ impl BotLibGraphics{
         };
         */
                 
-        let pos=&bot.inner.pos;
+        let pos=&bot.pos;
         let p1 = *pos + self.p1;//.rotate_by(velnorm);
         let p2 = *pos + self.p2;//.rotate_by(velnorm);
         let p3 = *pos + self.p3;//.rotate_by(velnorm);
@@ -71,13 +72,13 @@ impl BotLibGraphics{
 
         //let sat_multiplier=vel_len / bot_prop.max_vel.val() * 10.0;
         //let sat_multiplier=1.0;
-        let p1=p1.get();
-        let p2=p2.get();
-        let p3=p3.get();
+        let p1=p1.0;
+        let p2=p2.0;
+        let p3=p3.0;
         unsafe {
-            *verticies.get_unchecked_mut(i+0)=Vert([*p1.0,*p1.1]);
-            *verticies.get_unchecked_mut(i+1)=Vert([*p2.0,*p2.1]);
-            *verticies.get_unchecked_mut(i+2)=Vert([*p3.0,*p3.1]);
+            *verticies.get_unchecked_mut(i+0)=Vert(p1);
+            *verticies.get_unchecked_mut(i+1)=Vert(p2);
+            *verticies.get_unchecked_mut(i+2)=Vert(p3);
             
 
             /*
