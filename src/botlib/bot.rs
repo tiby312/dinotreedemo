@@ -233,7 +233,7 @@ pub fn collide_mouse(bot:&mut Bot,prop:&BotProp,mouse:&Mouse){
 
         let dis = dis_sqr.sqrt();
 
-        if dis.is_nan(){
+        if dis<0.0001{
             return;
         }
 
@@ -253,6 +253,7 @@ pub fn collide_mouse(bot:&mut Bot,prop:&BotProp,mouse:&Mouse){
         let acc = blap;// / prop.mass;
         */
         bot.acc+=-push_force;
+        //println!("bot acc={:?}",bot.acc);
         //bot.apply_force(&acc);
     }
 }
@@ -295,16 +296,11 @@ pub fn update_bot(bot:&mut Bot,prop:&BotProp,rect:&axgeom::Rect<NotNaN<f32>>) {
             bot.acc=bot.acc*(prop.max_acc/acc_sqr);
         }
         
-        {
-            let mut kk=bot.vel;
-            kk+=bot.acc;
-            bot.vel=kk;    
-        }
-        {
-            let mut kk=bot.pos;
-            kk+=bot.vel;
-            bot.pos=kk;
-        }
+        
+        bot.vel+=bot.acc;    
+        
+        
+        bot.pos+=bot.vel;
 
         bot.acc.0=[0.0;2];
    

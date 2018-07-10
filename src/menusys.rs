@@ -237,7 +237,6 @@ mod menu{
             for i in poses.iter(){
                 let curr=self.numberthing.get_number();
 
-                println!("{:?}",(i,self.buttons[0].get_dim()));
                 //up arrow
                 if self.buttons[0].get_dim().contains_point(i.0){
                     self.numberthing.update_number(curr+50);
@@ -262,7 +261,6 @@ mod menu{
             }
 
             if self.debug_clicker.update(self.debug_button.get_dim(),poses){
-                println!("pushed debug button!");
                 self.draw_debug=!self.draw_debug;
                 self.debug_button.set(self.draw_debug);
             }

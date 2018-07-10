@@ -312,7 +312,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
     }
 
     fn step(&mut self, poses: &[Vec2],verts:&mut [Vert]) {
-        println!("stepping");
+        //println!("stepping");
         let height = dinotree_inner::compute_tree_height_heuristic(self.bots.len());
         
         let (tree_verts,bot_verts)=verts.split_at_mut(TDraw::get_num_verticies(height));
@@ -330,7 +330,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
 
                 {
 
-                    let mut dyntree=dinotree_inner::DynTree::new(axgeom::YAXISS,(),bots.clone().into_iter().map(|b|{
+                    let mut dyntree=dinotree_inner::DynTree::new_seq(axgeom::YAXISS,(),bots.drain(..).into_iter().map(|b|{
                         dinotree::support::BBox::new(b.create_bbox(bot_prop.radius.radius()),b)
                     }));
 
@@ -347,7 +347,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                             
                         let query=kenmisc::Timer2::new();
                         
-                        let _v=dinotree::colfind::query_mut(&mut dyntree,|a,b|{
+                        let _v=dinotree::colfind::query_seq_mut(&mut dyntree,|a,b|{
                             bot::collide(&bot_prop,&mut a.inner,&mut b.inner);
                         });
                         
@@ -371,7 +371,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                             let mouse=Mouse::new(k,mouse_prop);
                              
                             dinotree::multirect::multi_rect_mut(&mut dyntree).for_all_in_rect_mut(bot::convert_to_nan(*mouse.get_rect()),&mut |a:&mut BBox<NotNaN<f32>,Bot>|{
-                                println!("colliding={:?}",a);
+                                //println!("colliding={:?}",a);
                                 bot::collide_mouse(&mut a.inner,&bot_prop,&mouse);
                             });
                             //handle_mouse(bot_prop,&mut dyntree,&mouse);
@@ -386,9 +386,14 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                     
                     self.logsys.general_log.write(log::Typ::RebalQuery,_rebal.elapsed());
 
+                    for b in dyntree.into_iter_orig_order(){
+                        bots.push(b.inner);
+                    }
+
                 }
         
                 {
+                    //println!("bot pos={:?}",bots[0]);
                     let _upd=kenmisc::Timer2::new();
                     bot::update(bots,bot_prop,border);
                     self.bot_graphics.update(&self.bot_prop,bots,bot_verts);
