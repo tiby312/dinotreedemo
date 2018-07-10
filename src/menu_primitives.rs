@@ -1,20 +1,7 @@
-//use super::*;
 use axgeom;
-//use Vert;
-//use sys::BotSysTrait;
-//use std::marker::PhantomData;
-//use botlib::bot::BotProp;
-//use sys::BotSysGraphics;
-//use botlib::graphics::BotLibGraphics;
-//use botlib::mouse::MouseProp;
-//use dinotree::TreeCache;
-//use dinotree::support::Numf32;
 use axgeom::XAXISS;
 use axgeom::YAXISS;
-//use sys::TreeNoDraw;
-//use botlib::bot;
 use botlib::bot::Bot;
-//use super::*;
 use ascii_num;
 use vec::Vec2;
 
@@ -71,8 +58,8 @@ impl Button{
         
         let dimx=m.0 as f32*spacing;
         let dimy=m.1 as f32*spacing;
-        let k=topleft.get();
-        let dim=axgeom::Rect::new(*(k.0),*(k.0)+dimx,*(k.1),*(k.1)+dimy);
+        let k=topleft.0;//get();
+        let dim=axgeom::Rect::new(k[0],k[0]+dimx,k[1],k[1]+dimy);
         
         let mut padding=dim;
         padding.grow(spacing*2.0);
@@ -90,13 +77,13 @@ impl Button{
             let x=pos.0 as f32;
             let y=pos.1 as f32;
             
-            k.inner.vel=Vec2::new(0.0,0.0);
-            k.inner.acc=Vec2::new(0.0,0.0);
+            k.vel=Vec2::new(0.0,0.0);
+            k.acc=Vec2::new(0.0,0.0);
 
-            let dx=self.dim.get_range2::<XAXISS>();
-            let yx=self.dim.get_range2::<YAXISS>();
+            let dx=self.dim.get_range(axgeom::XAXISS);
+            let yx=self.dim.get_range(axgeom::YAXISS);
 
-            k.pos=Vec2::new(dx.start+x*self.spacing,yx.start+y*self.spacing);
+            k.pos=Vec2::new(dx.left+x*self.spacing,yx.left+y*self.spacing);
         }
     }
 }
@@ -136,10 +123,10 @@ impl NumberThing{
                 k.vel=Vec2::new(0.0,0.0);
                 k.acc=Vec2::new(0.0,0.0);
 
-                let tr=self.top_right.get();
+                let tr=self.top_right.0;
                 let ds=self.digit_spacing;
                 let ps=self.pixel_spacing;
-                k.pos=Vec2::new(tr.0-i*ds+x*ps,tr.1+y*ps);
+                k.pos=Vec2::new(tr[0]-i*ds+x*ps,tr[1]+y*ps);
             }
         }
 

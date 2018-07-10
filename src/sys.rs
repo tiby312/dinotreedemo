@@ -16,6 +16,7 @@ use kenmisc;
 //use axgeom::AxisTrait;
 //use botlib::bot::BBot;
 //use botlib::bot::Bot;
+use dinotree::support::BBox;
 use Vert;
 use compt;
 use vec::Vec2;
@@ -143,7 +144,7 @@ impl TreeDraw for TreeDrawReal{
         impl<'a> dinotree::graphics::DividerDrawer for Bo<'a>{
             type N=NotNaN<f32>;
 
-            fn draw_divider<A:axgeom::AxisTrait>(&mut self,axis:A,div:Self::N,_cont:Option<[Self::N;2]>,length:[Self::N;2],depth:usize){
+            fn draw_divider<A:axgeom::AxisTrait>(&mut self,axis:A,div:Self::N,_cont:[Self::N;2],length:[Self::N;2],depth:usize){
                   let height=self.height;
                   let width=self.width;
 
@@ -306,13 +307,13 @@ pub trait BotSysTrait{
 impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
 
     fn get_num_verticies(&self)->usize{
-        let height = dinotree_inner::compute_tree_height(self.bots.len());
+        let height = dinotree_inner::compute_tree_height_heuristic(self.bots.len());
         TDraw::get_num_verticies(height)+BotLibGraphics::get_num_verticies(self.bots.len())
     }
 
     fn step(&mut self, poses: &[Vec2],verts:&mut [Vert]) {
-        
-        let height = dinotree_inner::compute_tree_height(self.bots.len());
+        println!("stepping");
+        let height = dinotree_inner::compute_tree_height_heuristic(self.bots.len());
         
         let (tree_verts,bot_verts)=verts.split_at_mut(TDraw::get_num_verticies(height));
         
@@ -333,7 +334,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                         dinotree::support::BBox::new(b.create_bbox(bot_prop.radius.radius()),b)
                     }));
 
-                    println!("tree health={:?}",dyntree.compute_tree_health());
+                    //println!("tree health={:?}",dyntree.compute_tree_health());
                     //self.logsys.rebal_log.write_data(&_bag);
 
 
@@ -369,8 +370,9 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                         for k in poses{
                             let mouse=Mouse::new(k,mouse_prop);
                              
-                            dinotree::multirect::multirect(&mut dyntree).for_all_in_rect(&bot::convert_to_nan(*mouse.get_rect()),&mut |a|{
-                                bot::collide_mouse(&mut a,&bot_prop,&mouse);
+                            dinotree::multirect::multi_rect_mut(&mut dyntree).for_all_in_rect_mut(bot::convert_to_nan(*mouse.get_rect()),&mut |a:&mut BBox<NotNaN<f32>,Bot>|{
+                                println!("colliding={:?}",a);
+                                bot::collide_mouse(&mut a.inner,&bot_prop,&mouse);
                             });
                             //handle_mouse(bot_prop,&mut dyntree,&mouse);
                             WrapAround::handle_mouse(bot_prop,&mut dyntree,border,&mouse);
@@ -429,7 +431,7 @@ impl<TDraw:TreeDraw> BotSystem<TDraw> {
 
         let bots = bot::create_bots(num_bots,&world,&bot_prop);
 
-        let height = dinotree_inner::compute_tree_height(bots.len());
+        let height = dinotree_inner::compute_tree_height_heuristic(bots.len());
 
         let bot_graphics=BotLibGraphics::new(&bot_prop);
         

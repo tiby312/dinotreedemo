@@ -127,7 +127,7 @@ mod menu{
         fn update(&mut self,dim:&axgeom::Rect<f32>,poses:&[vec::Vec2])->bool{
 
             for i in poses.iter(){
-                if dim.contains_vec(i){
+                if dim.contains_point(i.0){
                     self.there_is_finger=true;
                 } 
             }
@@ -178,11 +178,11 @@ mod menu{
                 let mut v=vec::Vec2::new(unit*5.0,starty as f32-unit*30.0);
                 
                 let b1=Button::new(v,ascii_num::get_misc(0),unit*2.0);
-                *(v.get_mut().0)+=unit*20.0;
+                v.0[0]+=unit*20.0;
                 let b2=Button::new(v,ascii_num::get_misc(1),unit*2.0);
-                *(v.get_mut().0)+=unit*20.0;
+                v.0[0]+=unit*20.0;
                 let b3=Button::new(v,ascii_num::get_misc(2),unit*2.0);
-                *(v.get_mut().0)+=unit*20.0;
+                v.0[0]+=unit*20.0;
                 [b1,b2,b3]
             };
 
@@ -226,6 +226,7 @@ mod menu{
     }
     impl MenuState for MenuSystem{
         fn step(&mut self, poses: &[vec::Vec2],verts:&mut[Vert])->(Option<Box<MenuState>>,(Option<[f32;3]>,bool)){
+            //println!("poses={:?}",poses);
             //let bot_prop=&self.bot_prop;
             let bots=&mut self.bots;
             //let border=&self.border;
@@ -236,14 +237,15 @@ mod menu{
             for i in poses.iter(){
                 let curr=self.numberthing.get_number();
 
+                println!("{:?}",(i,self.buttons[0].get_dim()));
                 //up arrow
-                if self.buttons[0].get_dim().contains_vec(i){
+                if self.buttons[0].get_dim().contains_point(i.0){
                     self.numberthing.update_number(curr+50);
                 }
-                if self.buttons[1].get_dim().contains_vec(i){
+                if self.buttons[1].get_dim().contains_point(i.0){
                     self.numberthing.update_number((curr as isize-50).max(1000) as usize); 
                 }
-                if self.buttons[2].get_dim().contains_vec(i){
+                if self.buttons[2].get_dim().contains_point(i.0){
 
                     let (startx,starty)=self.dim;
 
@@ -281,8 +283,8 @@ mod menu{
                 //let steps=bb.steps_taken();
             
                 for b in bb{
-                    b.inner.pos=vec::Vec2::new(-100.0,-100.0);
-                    b.update_box(&0.0);
+                    b.pos=vec::Vec2::new(-100.0,-100.0);
+                    //b.update_box(&0.0);
                 }
 
             }

@@ -413,7 +413,6 @@ pub fn create_bots_spaced<X,Y:Fn(&Vec2)->X>(world:&axgeom::Rect<NotNaN<f32>>,num
     let b=world.get_range(axgeom::YAXISS);
     let a=axgeom::Range{left:a.left.into_inner(),right:a.right.into_inner()};
     let b=axgeom::Range{left:b.left.into_inner(),right:b.right.into_inner()};
-    
     let start = Vec2::new(a.left,b.left) + Vec2::new(spacing, spacing);
     //let spacing = bot_prop.radius.radius2();
 

@@ -15,7 +15,7 @@ mod sys;
 mod menusys;
 mod wrap_around;
 mod menu_primitives;
-mod vec;
+pub mod vec;
 
 pub use menusys::MenuGame;
 

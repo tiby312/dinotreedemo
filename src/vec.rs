@@ -129,7 +129,7 @@ impl std::ops::AddAssign for Vec2 {
         let a=&mut self.0;
         let b=&other.0;
         a[0]+=b[0];
-        a[0]+=b[1];
+        a[1]+=b[1];
     }
 }
 
