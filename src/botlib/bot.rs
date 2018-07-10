@@ -151,7 +151,7 @@ pub fn collide(prop:&BotProp,a:&mut Bot,b:&mut Bot){
 
     let dis = dis_sqr.sqrt();
 
-    if dis.is_nan(){
+    if dis<0.0001{
         let vec=Vec2::new(prop.max_acc,0.0); //TODO dont hardcode. and test
         bots[0].acc+=vec;//apply_force(&vec);
         bots[1].acc+=-vec;//.apply_force(&-vec);

@@ -330,7 +330,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
 
                 {
 
-                    let mut dyntree=dinotree_inner::DynTree::new_seq(axgeom::YAXISS,(),bots.drain(..).into_iter().map(|b|{
+                    let mut dyntree=dinotree_inner::DynTree::new(axgeom::YAXISS,(),bots.drain(..).into_iter().map(|b|{
                         dinotree::support::BBox::new(b.create_bbox(bot_prop.radius.radius()),b)
                     }));
 
@@ -347,16 +347,9 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                             
                         let query=kenmisc::Timer2::new();
                         
-                        let _v=dinotree::colfind::query_seq_mut(&mut dyntree,|a,b|{
+                        let _v=dinotree::colfind::query_mut(&mut dyntree,|a,b|{
                             bot::collide(&bot_prop,&mut a.inner,&mut b.inner);
                         });
-                        
-                        /*
-                        let a=AABBox::new((Numf32::from_f32(0.0),Numf32::from_f32(100.0)),(Numf32::from_f32(0.0),Numf32::from_f32(100.0)));
-                        dyntree.for_all_in_rect(&a,|a:ColSingle<BBot>|{
-                            a.1.vel=Vec2::new(0.0,0.0);
-                        });
-                        */
 
                         //self.logsys.colfind_log.write_data(&_v);
 
@@ -371,10 +364,8 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                             let mouse=Mouse::new(k,mouse_prop);
                              
                             dinotree::multirect::multi_rect_mut(&mut dyntree).for_all_in_rect_mut(bot::convert_to_nan(*mouse.get_rect()),&mut |a:&mut BBox<NotNaN<f32>,Bot>|{
-                                //println!("colliding={:?}",a);
                                 bot::collide_mouse(&mut a.inner,&bot_prop,&mouse);
                             });
-                            //handle_mouse(bot_prop,&mut dyntree,&mouse);
                             WrapAround::handle_mouse(bot_prop,&mut dyntree,border,&mouse);
                         }
 
@@ -393,7 +384,6 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                 }
         
                 {
-                    //println!("bot pos={:?}",bots[0]);
                     let _upd=kenmisc::Timer2::new();
                     bot::update(bots,bot_prop,border);
                     self.bot_graphics.update(&self.bot_prop,bots,bot_verts);
@@ -411,9 +401,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
 }
 
 pub fn new(num_bots:usize,startx:usize,starty:usize,draw_tree:bool)->Box<BotSysTrait>{
-    //use axgeom::XAXISS;
-    //use axgeom::YAXISS;
-
+    
     if draw_tree{
         let k=BotSystem::<TreeDrawReal>::new_inner(num_bots,startx,starty);
         Box::new(k)
