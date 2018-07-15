@@ -1,8 +1,6 @@
 use axgeom;
 use botlib::graphics::BotLibGraphics;
 use dinotree;
-use dinotree::*;
-//use dinotree::support::Numf32;
 use axgeom::Rect;
 use wrap_around::WrapAround;
 use botlib::mouse::Mouse;
@@ -12,16 +10,11 @@ use botlib::mouse::MouseProp;
 use botlib::bot;
 use std::marker::PhantomData;
 use kenmisc;
-//use dinotree::support::DefaultDepthLevel;
-//use axgeom::AxisTrait;
-//use botlib::bot::BBot;
-//use botlib::bot::Bot;
 use dinotree::support::BBox;
 use Vert;
 use compt;
 use vec::Vec2;
 use dinotree_inner;
-//use botlib::bot::convert_aabbox;
 
 pub mod log2{
 
@@ -205,7 +198,6 @@ impl TreeDraw for TreeDrawReal{
             let bottomright=[*bottomright.0,*bottomright.1];
             */
 
-            unsafe {
                 verticies[0].0=topleft;
                 
 
@@ -238,7 +230,7 @@ impl TreeDraw for TreeDrawReal{
                     .get_unchecked_mut(5)
                     .set_pos(*topright.0, *topright.1);
                 */
-            }
+            
         }
 
     }
@@ -363,7 +355,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                         for k in poses{
                             let mouse=Mouse::new(k,mouse_prop);
                              
-                            dinotree::multirect::multi_rect_mut(&mut dyntree).for_all_in_rect_mut(bot::convert_to_nan(*mouse.get_rect()),&mut |a:&mut BBox<NotNaN<f32>,Bot>|{
+                            let _ = dinotree::multirect::multi_rect_mut(&mut dyntree).for_all_in_rect_mut(bot::convert_to_nan(*mouse.get_rect()),&mut |a:&mut BBox<NotNaN<f32>,Bot>|{
                                 bot::collide_mouse(&mut a.inner,&bot_prop,&mouse);
                             });
                             WrapAround::handle_mouse(bot_prop,&mut dyntree,border,&mouse);

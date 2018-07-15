@@ -4,9 +4,7 @@ use botlib::mouse::MouseProp;
 use super::mouse::Mouse;
 use ordered_float::NotNaN;
 use axgeom::Rect;
-
 use vec::Vec2;
-use dinotree::*;
 
 
 
@@ -444,7 +442,7 @@ pub fn update(bots:&mut [Bot],prop:BotProp,rect:&axgeom::Rect<NotNaN<f32>>) {
 
 pub fn create_bots(num_bot:usize, world:&axgeom::Rect<NotNaN<f32>>, bot_prop: &BotProp)->Vec<Bot>{
     let man={
-        let pp=&bot_prop;
+        //let pp=&bot_prop;
         create_bots_spaced(world,num_bot,bot_prop.radius.radius2(),|vec:&Vec2|{
         
             Bot::new(*vec)

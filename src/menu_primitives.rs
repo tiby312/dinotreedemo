@@ -1,6 +1,4 @@
 use axgeom;
-use axgeom::XAXISS;
-use axgeom::YAXISS;
 use botlib::bot::Bot;
 use ascii_num;
 use vec::Vec2;

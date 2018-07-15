@@ -1,18 +1,10 @@
 use axgeom;
 use axgeom::Rect;
 use botlib::bot::BotProp;
-
-
-use dinotree::*;
 use dinotree;
-//use dinotree::Rects;
-//use dinotree::support::Numf32;
-use dinotree::support;
-
 use botlib::bot::Bot;
 use botlib::bot;
 use axgeom::AxisTrait;
-//use botlib::bot::convert_aabbox;
 use ordered_float::NotNaN;
 use botlib::mouse::Mouse;
 use sys;
@@ -58,7 +50,7 @@ impl WrapAround{
 
 		mm.move_to(&ff);    
 
-		dinotree::multirect::multi_rect_mut(tree).for_all_in_rect_mut(bot::convert_to_nan(*mm.get_rect()),
+		let _ =dinotree::multirect::multi_rect_mut(tree).for_all_in_rect_mut(bot::convert_to_nan(*mm.get_rect()),
 			&mut |a:&mut dinotree::support::BBox<NotNaN<f32>,Bot>|{bot::collide_mouse(&mut a.inner,&prop,mouse);});
 	
 	}
@@ -79,9 +71,6 @@ impl WrapAround{
 
         
         //Regardless of the starting axis, we want to handle x and y.
-        use axgeom::XAXISS;
-		use axgeom::YAXISS;
-
 		Self::handle2(axgeom::XAXISS,&max_prop,tree,width,padding,rect);
         Self::handle2(axgeom::YAXISS,&max_prop,tree,width,padding,rect);
 	}
@@ -148,7 +137,7 @@ impl WrapAround{
 		
 		};
 		let mut m=dinotree::multirect::multi_rect_mut(tree);
-		dinotree::multirect::collide_two_rect_parallel(&mut m,axis.next(),&rect1,&rect2,bo);
+		let _ = dinotree::multirect::collide_two_rect_parallel(&mut m,axis.next(),&rect1,&rect2,bo);
 		
 	}
 	
