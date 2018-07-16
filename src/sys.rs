@@ -10,7 +10,7 @@ use botlib::mouse::MouseProp;
 use botlib::bot;
 use std::marker::PhantomData;
 use kenmisc;
-use dinotree::support::BBox;
+use dinotree_inner::BBox;
 use Vert;
 use compt;
 use vec::Vec2;
@@ -92,7 +92,7 @@ pub mod log{
 
 
 
-pub type Tree=dinotree_inner::DynTree<axgeom::YAXISS,(),dinotree::support::BBox<NotNaN<f32>,Bot>>;
+pub type Tree=dinotree_inner::DynTree<axgeom::YAXISS,(),dinotree_inner::BBox<NotNaN<f32>,Bot>>;
 
 use botlib::bot::Bot;
 use ordered_float::*;
@@ -287,7 +287,7 @@ pub struct BotSystem<TDraw:TreeDraw> {
     bot_prop:BotProp,
     border: axgeom::Rect<NotNaN<f32>>,
     phantom:PhantomData<TDraw>,
-    logsys:LogSystem
+    //logsys:LogSystem
 }
 
 
@@ -322,9 +322,10 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
 
                 {
 
-                    let mut dyntree=dinotree_inner::DynTree::new(axgeom::YAXISS,(),bots.drain(..).into_iter().map(|b|{
-                        dinotree::support::BBox::new(b.create_bbox(bot_prop.radius.radius()),b)
-                    }));
+                    let mut dyntree=dinotree_inner::fast_alloc::new(axgeom::YAXISS,(),&bots,|bot|{
+                        bot.create_bbox(bot_prop.radius.radius())
+                    });
+
 
                     //println!("tree health={:?}",dyntree.compute_tree_health());
                     //self.logsys.rebal_log.write_data(&_bag);
@@ -335,7 +336,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                     //later will add together the copy and the source.
                     
                     {
-                        self.logsys.general_log.write(log::Typ::Rebal,_rebal.elapsed());
+                        //self.logsys.general_log.write(log::Typ::Rebal,_rebal.elapsed());
                             
                         let query=kenmisc::Timer2::new();
                         
@@ -345,7 +346,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
 
                         //self.logsys.colfind_log.write_data(&_v);
 
-                        self.logsys.general_log.write(log::Typ::Query,query.elapsed());
+                        //self.logsys.general_log.write(log::Typ::Query,query.elapsed());
                         
 
                         WrapAround::handle(&mut dyntree,border,bot_prop);   
@@ -367,10 +368,11 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                     }
 
                     
-                    self.logsys.general_log.write(log::Typ::RebalQuery,_rebal.elapsed());
+                    //self.logsys.general_log.write(log::Typ::RebalQuery,_rebal.elapsed());
 
-                    for b in dyntree.into_iter_orig_order(){
-                        bots.push(b.inner);
+                    for (a,b) in bots.iter_mut().zip(dyntree.into_iter_orig_order()){
+                        *a=b.inner;
+                        //bots.push(b.inner);
                     }
 
                 }
@@ -379,12 +381,12 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                     let _upd=kenmisc::Timer2::new();
                     bot::update(bots,bot_prop,border);
                     self.bot_graphics.update(&self.bot_prop,bots,bot_verts);
-                    self.logsys.general_log.write(log::Typ::BotUpdate,_upd.elapsed());
+                    //self.logsys.general_log.write(log::Typ::BotUpdate,_upd.elapsed());
                 }
             
             
-                self.logsys.general_log.write(log::Typ::Total,_time_all.elapsed());
-                self.logsys.general_log.newline();
+                //self.logsys.general_log.write(log::Typ::Total,_time_all.elapsed());
+                //self.logsys.general_log.newline();
             }
         }
     
@@ -420,7 +422,7 @@ impl<TDraw:TreeDraw> BotSystem<TDraw> {
 
         let bot_graphics=BotLibGraphics::new(&bot_prop);
         
-        let logsys=LogSystem::new(height);
+        //let logsys=LogSystem::new(height);
         
         BotSystem {
             bot_graphics:bot_graphics,
@@ -429,7 +431,7 @@ impl<TDraw:TreeDraw> BotSystem<TDraw> {
             bot_prop,
             border: world,
             phantom:PhantomData,
-            logsys
+            //logsys
         }
     }
 }

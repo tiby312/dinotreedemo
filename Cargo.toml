@@ -6,15 +6,10 @@ authors = ["Ken Reed <kenakioreed@gmail.com>"]
 [dependencies]
 rayon = "1.0.1"
 ordered-float = "0.5.0"
+
 compt = {git ="https://github.com/tiby312/compt.git"}
 axgeom = {git="https://github.com/tiby312/axgeom.git"}
 dinotree_inner = {git="https://github.com/tiby312/dinotree_inner.git"}
 dinotree = {git="https://github.com/tiby312/dinotree.git"}
 kenmisc = { git = "https://github.com/tiby312/kenmisc.git" }
-
-#dinotree_inner={path="../dinotree_inner"}
-#dinotree={path="../dinotree_alg"}
-#axgeom = {path = "../axgeom"}
-#compt = {path = "../compt"}
-
 ascii_num={git = "https://github.com/tiby312/ascii_num.git"}
