@@ -1,7 +1,7 @@
 use axgeom;
 use axgeom::Rect;
 use botlib::bot::BotProp;
-use dinotree;
+use dinotree_alg;
 use botlib::bot::Bot;
 use botlib::bot;
 use axgeom::AxisTrait;
@@ -50,7 +50,7 @@ impl WrapAround{
 
 		mm.move_to(&ff);    
 
-		let _ =dinotree::multirect::multi_rect_mut(tree).for_all_in_rect_mut(bot::convert_to_nan(*mm.get_rect()),
+		let _ =dinotree_alg::multirect::multi_rect_mut(tree).for_all_in_rect_mut(bot::convert_to_nan(*mm.get_rect()),
 			&mut |a:&mut dinotree_inner::BBox<NotNaN<f32>,Bot>|{bot::collide_mouse(&mut a.inner,&prop,mouse);});
 	
 	}
@@ -136,8 +136,8 @@ impl WrapAround{
 			    bot::collide(&prop,&mut copy_botstuff,&mut bb.inner);
 		
 		};
-		let mut m=dinotree::multirect::multi_rect_mut(tree);
-		let _ = dinotree::multirect::collide_two_rect_parallel(&mut m,axis.next(),&rect1,&rect2,bo);
+		let mut m=dinotree_alg::multirect::multi_rect_mut(tree);
+		let _ = dinotree_alg::multirect::collide_two_rect_parallel(&mut m,axis.next(),&rect1,&rect2,bo);
 		
 	}
 	

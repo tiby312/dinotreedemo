@@ -7,7 +7,7 @@ extern crate ordered_float;
 //extern crate testy;
 extern crate rayon;
 extern crate ascii_num;
-extern crate dinotree;
+extern crate dinotree_alg;
 extern crate dinotree_inner;
  
 mod botlib;
@@ -45,7 +45,7 @@ mod mlog{
         }
 
         fn newline(&mut self){
-            self.logger.write_data(&self.arr);
+            self.logger.write_data(self.arr.iter().map(|a|*a));
         }
     }
 
