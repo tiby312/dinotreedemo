@@ -249,6 +249,7 @@ impl TreeDraw for TreeNoDraw{
 use sys::log::LogT;
 use kenmisc::log::Logger;
 use mlog;
+/*
 pub struct LogSystem{
     pub general_log:mlog::MLog,
     pub rebal_log:Logger,
@@ -276,7 +277,7 @@ impl LogSystem{
         LogSystem{general_log,rebal_log,colfind_log}
     }
 }
-
+*/
 
 
 pub struct BotSystem<TDraw:TreeDraw> {
@@ -286,7 +287,7 @@ pub struct BotSystem<TDraw:TreeDraw> {
     bot_prop:BotProp,
     border: axgeom::Rect<NotNaN<f32>>,
     phantom:PhantomData<TDraw>,
-    logsys:LogSystem
+    //logsys:LogSystem
 }
 
 
@@ -317,17 +318,17 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
             let bot_prop=self.bot_prop;
 
             {
-                let _rebal=kenmisc::Timer2::new();
+                //let _rebal=kenmisc::Timer2::new();
 
                 {
-
-                    let (mut dyntree,_bag)=dinotree_inner::DynTree::with_debug(axgeom::YAXISS,(),&bots,|bot|{
+                    let num_bots=bots.len();
+                    let mut dyntree=dinotree_inner::DynTree::new(axgeom::YAXISS,(),&bots,|bot|{
                         bot.create_bbox(bot_prop.radius.radius())
-                    },dinotree_inner::DefaultHeightHeur);
+                    });
 
 
                     //println!("tree health={:?}",dyntree.compute_tree_health());
-                    self.logsys.rebal_log.write_data(_bag);
+                    //self.logsys.rebal_log.write_data(_bag);
 
 
                     //the dynamic tree made a copy of the bots.
@@ -335,17 +336,17 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                     //later will add together the copy and the source.
                     
                     {
-                        self.logsys.general_log.write(log::Typ::Rebal,_rebal.elapsed());
+                        //self.logsys.general_log.write(log::Typ::Rebal,_rebal.elapsed());
                             
-                        let query=kenmisc::Timer2::new();
+                        //let query=kenmisc::Timer2::new();
                         
-                        let _v=dinotree_alg::colfind::query_debug_mut(&mut dyntree,|a,b|{
+                        dinotree_alg::colfind::query_mut(&mut dyntree,|a,b|{
                             bot::collide(&bot_prop,&mut a.inner,&mut b.inner);
                         });
 
-                        self.logsys.colfind_log.write_data(_v);
+                        //self.logsys.colfind_log.write_data(_v);
 
-                        self.logsys.general_log.write(log::Typ::Query,query.elapsed());
+                        //self.logsys.general_log.write(log::Typ::Query,query.elapsed());
                         
 
                         WrapAround::handle(&mut dyntree,border,bot_prop);   
@@ -367,7 +368,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                     }
 
                     
-                    self.logsys.general_log.write(log::Typ::RebalQuery,_rebal.elapsed());
+                    //self.logsys.general_log.write(log::Typ::RebalQuery,_rebal.elapsed());
                     dyntree.apply_orig_order(bots,|b,t|*t=b.inner);
 
                 }
@@ -376,12 +377,12 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                     let _upd=kenmisc::Timer2::new();
                     bot::update(bots,bot_prop,border);
                     self.bot_graphics.update(&self.bot_prop,bots,bot_verts);
-                    self.logsys.general_log.write(log::Typ::BotUpdate,_upd.elapsed());
+                    //self.logsys.general_log.write(log::Typ::BotUpdate,_upd.elapsed());
                 }
             
             
-                self.logsys.general_log.write(log::Typ::Total,_time_all.elapsed());
-                self.logsys.general_log.newline();
+                //self.logsys.general_log.write(log::Typ::Total,_time_all.elapsed());
+                //self.logsys.general_log.newline();
             }
         }
     
@@ -417,7 +418,7 @@ impl<TDraw:TreeDraw> BotSystem<TDraw> {
 
         let bot_graphics=BotLibGraphics::new(&bot_prop);
         
-        let logsys=LogSystem::new(height);
+        //let logsys=LogSystem::new(height);
         
         BotSystem {
             bot_graphics:bot_graphics,
@@ -426,7 +427,7 @@ impl<TDraw:TreeDraw> BotSystem<TDraw> {
             bot_prop,
             border: world,
             phantom:PhantomData,
-            logsys
+            //logsys
         }
     }
 }
