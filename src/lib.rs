@@ -1,14 +1,12 @@
 #![feature(try_from)]
 extern crate axgeom;
 extern crate compt;
-//extern crate simpdraw;
 extern crate kenmisc;
 extern crate ordered_float;
-//extern crate testy;
 extern crate rayon;
 extern crate ascii_num;
 extern crate dinotree_alg;
-extern crate dinotree_inner;
+extern crate dinotree;
  
 mod botlib;
 mod sys;

@@ -6,13 +6,12 @@ authors = ["Ken Reed <kenakioreed@gmail.com>"]
 [dependencies]
 rayon = "1.0.1"
 ordered-float = "0.5.0"
-
-compt = "1.0.0"
+compt = {path="../compt"}
 axgeom = "1.0.0"
 
 #dinotree_inner = {git="https://github.com/tiby312/dinotree_inner.git"}
 #dinotree = {git="https://github.com/tiby312/dinotree.git"}
-dinotree_inner={path="../dinotree_inner"}
+dinotree={path="../dinotree"}
 dinotree_alg={path="../dinotree_alg"}
 
 

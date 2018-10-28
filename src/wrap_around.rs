@@ -8,7 +8,7 @@ use axgeom::AxisTrait;
 use ordered_float::NotNaN;
 use botlib::mouse::Mouse;
 use sys;
-use dinotree_inner;
+use dinotree;
 
 pub struct WrapAround{}
 
@@ -51,7 +51,7 @@ impl WrapAround{
 		mm.move_to(&ff);    
 
 		let _ =dinotree_alg::multirect::multi_rect_mut(tree).for_all_in_rect_mut(bot::convert_to_nan(*mm.get_rect()),
-			&mut |a:&mut dinotree_inner::BBox<NotNaN<f32>,Bot>|{bot::collide_mouse(&mut a.inner,&prop,mouse);});
+			&mut |a:&mut dinotree::BBox<NotNaN<f32>,Bot>|{bot::collide_mouse(&mut a.inner,&prop,mouse);});
 	
 	}
 	pub fn handle(tree:&mut sys::Tree,rect:&Rect<NotNaN<f32>>,max_prop:BotProp){
@@ -121,7 +121,7 @@ impl WrapAround{
 		let rect1=bot::convert_to_nan(rect1);
 		let rect2=bot::convert_to_nan(rect2);
 
-		let bo=|aa:&mut dinotree_inner::BBox<NotNaN<f32>,Bot>,bb:&mut dinotree_inner::BBox<NotNaN<f32>,Bot>|{
+		let bo=|aa:&mut dinotree::BBox<NotNaN<f32>,Bot>,bb:&mut dinotree::BBox<NotNaN<f32>,Bot>|{
 
 			    let mut copy_botstuff=aa.inner.clone();
 			    let mut pos=aa.inner.pos.clone();

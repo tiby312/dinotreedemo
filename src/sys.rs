@@ -10,11 +10,11 @@ use botlib::mouse::MouseProp;
 use botlib::bot;
 use std::marker::PhantomData;
 use kenmisc;
-use dinotree_inner::BBox;
+use dinotree::BBox;
 use Vert;
 use compt;
 use vec::Vec2;
-use dinotree_inner;
+use dinotree;
 
 pub mod log2{
 
@@ -91,7 +91,7 @@ pub mod log{
 }
 
 
-pub type Tree=dinotree_inner::DynTree<axgeom::YAXISS,(),dinotree_inner::BBox<NotNaN<f32>,Bot>>;
+pub type Tree=dinotree::DinoTree<axgeom::YAXISS,(),dinotree::BBox<NotNaN<f32>,Bot>>;
 
 use botlib::bot::Bot;
 use ordered_float::*;
@@ -106,8 +106,6 @@ impl TreeDraw for TreeDrawReal{
     fn get_num_verticies(height:usize)->usize{
         let num_nodes=compt::compute_num_nodes(height);
         (num_nodes / 2) * 6
-
-        //dinotree::graphics::get_num_verticies(height)
     }
     fn update(rect:&Rect<NotNaN<f32>>,tree:&Tree,verts:&mut [Vert]){
         /*
@@ -123,7 +121,7 @@ impl TreeDraw for TreeDrawReal{
         let k:&mut [Bo]=unsafe{std::mem::transmute(verts)};
         dinotree::graphics::update(bot::convert_to_nan(*rect),tree,k,10.0);
         */
-        let height=tree.get_height();
+        let height=tree.height();
         let width=1 as f32;
         dinotree_alg::graphics::draw(tree,&mut Bo{verts,height,width},rect);
 
@@ -299,13 +297,13 @@ pub trait BotSysTrait{
 impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
 
     fn get_num_verticies(&self)->usize{
-        let height = dinotree_inner::compute_tree_height_heuristic(self.bots.len());
+        let height = dinotree::advanced::compute_tree_height_heuristic(self.bots.len());
         TDraw::get_num_verticies(height)+BotLibGraphics::get_num_verticies(self.bots.len())
     }
 
     fn step(&mut self, poses: &[Vec2],verts:&mut [Vert]) {
         //println!("stepping");
-        let height = dinotree_inner::compute_tree_height_heuristic(self.bots.len());
+        let height = dinotree::advanced::compute_tree_height_heuristic(self.bots.len());
         
         let (tree_verts,bot_verts)=verts.split_at_mut(TDraw::get_num_verticies(height));
         
@@ -322,7 +320,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
 
                 {
                     let num_bots=bots.len();
-                    let mut dyntree=dinotree_inner::DynTree::new(axgeom::YAXISS,(),&bots,|bot|{
+                    let mut dyntree=dinotree::DinoTree::new(axgeom::YAXISS,(),&bots,|bot|{
                         bot.create_bbox(bot_prop.radius.radius())
                     });
 
@@ -369,7 +367,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
 
                     
                     //self.logsys.general_log.write(log::Typ::RebalQuery,_rebal.elapsed());
-                    dyntree.apply_orig_order(bots,|b,t|*t=b.inner);
+                    dyntree.apply(bots,|b,t|*t=b.inner);
 
                 }
         
@@ -414,7 +412,7 @@ impl<TDraw:TreeDraw> BotSystem<TDraw> {
 
         let bots = bot::create_bots(num_bots,&world,&bot_prop);
 
-        let height = dinotree_inner::compute_tree_height_heuristic(bots.len());
+        let height = dinotree::advanced::compute_tree_height_heuristic(bots.len());
 
         let bot_graphics=BotLibGraphics::new(&bot_prop);
         
