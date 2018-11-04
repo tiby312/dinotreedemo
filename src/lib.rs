@@ -1,13 +1,13 @@
 #![feature(try_from)]
 extern crate axgeom;
 extern crate compt;
-extern crate kenmisc;
 extern crate ordered_float;
 extern crate rayon;
 extern crate ascii_num;
 extern crate dinotree_alg;
 extern crate dinotree;
- 
+extern crate dinotree_measure;
+
 mod botlib;
 mod sys;
 mod menusys;
@@ -20,7 +20,7 @@ pub use menusys::MenuGame;
 #[derive(Copy,Clone,Debug,Default)]
 pub struct Vert(pub [f32;2]);
 
-
+/*
 mod mlog{
     
     use sys;
@@ -60,6 +60,7 @@ mod mlog{
         }
     }
 }
+*/
 
 #[cfg(test)]
 mod tests {

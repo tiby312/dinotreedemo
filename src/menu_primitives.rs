@@ -88,7 +88,7 @@ impl Button{
 
 
 pub struct NumberThing{
-    digits:Vec<Vec<(usize,usize)>>,
+    digits:ascii_num::PointDigitIterator,//Vec<Vec<(usize,usize)>>,
     pixel_spacing:f32,
     digit_spacing:f32,
     number:usize,
@@ -109,15 +109,16 @@ impl NumberThing{
     pub fn draw<'a,I:Iterator<Item=&'a mut Bot>>(&self,bb:&mut I){
         //use dinotree::SweepTrait;
         //use ascii_num;
-        for (i,digit) in self.digits.iter().rev().enumerate(){
-            let i=i as f32;
+        let length=self.digits.len();
+        for (i,digit) in self.digits.clone().enumerate(){
+            let i=(length-i) as f32;
             for pos in digit{
                 let k=bb.next().unwrap();
                 
                 //let k=k.get_mut().1;
 
-                let x=pos.0 as f32;
-                let y=pos.1 as f32;
+                let x=pos[0] as f32;
+                let y=pos[1] as f32;
                 k.vel=Vec2::new(0.0,0.0);
                 k.acc=Vec2::new(0.0,0.0);
 

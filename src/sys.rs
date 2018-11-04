@@ -9,13 +9,19 @@ use botlib::bot::BotProp;
 use botlib::mouse::MouseProp;
 use botlib::bot;
 use std::marker::PhantomData;
-use kenmisc;
+//use kenmisc;
 use dinotree::BBox;
 use Vert;
 use compt;
 use vec::Vec2;
 use dinotree;
 
+use dinotree_measure::*;
+
+
+
+
+/*
 pub mod log2{
 
     
@@ -31,9 +37,10 @@ pub mod log2{
     impl Logger{
 
         pub fn new(str:&'static str)->Logger{
-            
+
             let file = File::create(str).unwrap();
             Logger{file:file,counter:0}
+        
         }
 
         pub fn with_names(str:&'static str,names:&[&'static str])->Logger{
@@ -54,9 +61,9 @@ pub mod log2{
             for k in slice{
                 write!(self.file,"{},",k).unwrap();    
             }
-            writeln!(self.file,"").unwrap();
-            
+            writeln!(self.file,"").unwrap();   
         }
+
         pub fn write_data(&mut self,slice:&[f64]){
             
             write!(self.file,"{},",self.counter).unwrap();
@@ -69,10 +76,11 @@ pub mod log2{
         }
     }
 }
+*/
 
 
 
-
+/*
 pub mod log{
     pub enum Typ {
         Rebal,
@@ -89,7 +97,7 @@ pub mod log{
         fn newline(&mut self);
     }  
 }
-
+*/
 
 pub type Tree=dinotree::DinoTree<axgeom::YAXISS,(),dinotree::BBox<NotNaN<f32>,Bot>>;
 
@@ -244,9 +252,9 @@ impl TreeDraw for TreeNoDraw{
 
 
 
-use sys::log::LogT;
-use kenmisc::log::Logger;
-use mlog;
+//use sys::log::LogT;
+//use kenmisc::log::Logger;
+//use mlog;
 /*
 pub struct LogSystem{
     pub general_log:mlog::MLog,
@@ -285,9 +293,15 @@ pub struct BotSystem<TDraw:TreeDraw> {
     bot_prop:BotProp,
     border: axgeom::Rect<NotNaN<f32>>,
     phantom:PhantomData<TDraw>,
+    session:Session,
     //logsys:LogSystem
 }
 
+impl<T:TreeDraw> Drop for BotSystem<T>{
+    fn drop(&mut self){
+        self.session.finish();
+    }
+}
 
 pub trait BotSysTrait{
     fn get_num_verticies(&self)->usize;
@@ -308,7 +322,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
         let (tree_verts,bot_verts)=verts.split_at_mut(TDraw::get_num_verticies(height));
         
 
-        let _time_all=kenmisc::Timer2::new();
+        //let _time_all=kenmisc::Timer2::new();
         let bots=&mut self.bots;
         {                
             let border=&self.border;
@@ -319,8 +333,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                 //let _rebal=kenmisc::Timer2::new();
 
                 {
-                    let num_bots=bots.len();
-                    let mut dyntree=dinotree::DinoTree::new(axgeom::YAXISS,(),&bots,|bot|{
+                    let mut tree=DinoTreeMeasure::new(axgeom::YAXISS,&bots,|bot|{
                         bot.create_bbox(bot_prop.radius.radius())
                     });
 
@@ -338,7 +351,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                             
                         //let query=kenmisc::Timer2::new();
                         
-                        dinotree_alg::colfind::query_mut(&mut dyntree,|a,b|{
+                        tree.query_mut(&mut self.session,|a,b|{
                             bot::collide(&bot_prop,&mut a.inner,&mut b.inner);
                         });
 
@@ -347,32 +360,32 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                         //self.logsys.general_log.write(log::Typ::Query,query.elapsed());
                         
 
-                        WrapAround::handle(&mut dyntree,border,bot_prop);   
+                        WrapAround::handle(tree.get_inner(),border,bot_prop);   
 
                         
 
                         for k in poses{
                             let mouse=Mouse::new(k,mouse_prop);
                              
-                            let _ = dinotree_alg::multirect::multi_rect_mut(&mut dyntree).for_all_in_rect_mut(bot::convert_to_nan(*mouse.get_rect()),&mut |a:&mut BBox<NotNaN<f32>,Bot>|{
+                            let _ = dinotree_alg::multirect::multi_rect_mut(tree.get_inner()).for_all_in_rect_mut(bot::convert_to_nan(*mouse.get_rect()),&mut |a:&mut BBox<NotNaN<f32>,Bot>|{
                                 bot::collide_mouse(&mut a.inner,&bot_prop,&mouse);
                             });
-                            WrapAround::handle_mouse(bot_prop,&mut dyntree,border,&mouse);
+                            WrapAround::handle_mouse(bot_prop,tree.get_inner(),border,&mouse);
                         }
 
 
-                        TDraw::update(&self.border,&dyntree,tree_verts);
+                        TDraw::update(&self.border,&tree.get_inner(),tree_verts);
                         
                     }
 
                     
                     //self.logsys.general_log.write(log::Typ::RebalQuery,_rebal.elapsed());
-                    dyntree.apply(bots,|b,t|*t=b.inner);
+                    tree.get_inner().apply(bots,|b,t|*t=b.inner);
 
                 }
         
                 {
-                    let _upd=kenmisc::Timer2::new();
+                    //let _upd=kenmisc::Timer2::new();
                     bot::update(bots,bot_prop,border);
                     self.bot_graphics.update(&self.bot_prop,bots,bot_verts);
                     //self.logsys.general_log.write(log::Typ::BotUpdate,_upd.elapsed());
@@ -412,12 +425,12 @@ impl<TDraw:TreeDraw> BotSystem<TDraw> {
 
         let bots = bot::create_bots(num_bots,&world,&bot_prop);
 
-        let height = dinotree::advanced::compute_tree_height_heuristic(bots.len());
+        //let height = dinotree::advanced::compute_tree_height_heuristic(bots.len());
 
         let bot_graphics=BotLibGraphics::new(&bot_prop);
         
         //let logsys=LogSystem::new(height);
-        
+        let session=Session::new();
         BotSystem {
             bot_graphics:bot_graphics,
             mouse_prop:mouse_prop,
@@ -426,6 +439,7 @@ impl<TDraw:TreeDraw> BotSystem<TDraw> {
             border: world,
             phantom:PhantomData,
             //logsys
+            session
         }
     }
 }
