@@ -2,7 +2,6 @@
 extern crate axgeom;
 extern crate compt;
 extern crate ordered_float;
-extern crate rayon;
 extern crate ascii_num;
 extern crate dinotree_alg;
 extern crate dinotree;
