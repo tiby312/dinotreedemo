@@ -19,6 +19,7 @@ impl BotLibGraphics{
         //let p2 = axgeom::Vec2::new(-z, -z);
         //let p3 = axgeom::Vec2::new(-z, z);
 
+        //let r=1.0;
         let mut p1=Vec2::new(3.0,2.0);
         p1*=r/p1.len();
 

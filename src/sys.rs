@@ -15,7 +15,7 @@ use Vert;
 use compt;
 use vec::Vec2;
 use dinotree;
-
+use borders;
 use dinotree_measure::*;
 
 
@@ -360,7 +360,7 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                         //self.logsys.general_log.write(log::Typ::Query,query.elapsed());
                         
 
-                        WrapAround::handle(tree.get_inner(),border,bot_prop);   
+                        //WrapAround::handle(tree.get_inner(),border,bot_prop);   
 
                         
 
@@ -370,8 +370,10 @@ impl<TDraw:TreeDraw> BotSysTrait for BotSystem<TDraw>{
                             let _ = dinotree_alg::multirect::multi_rect_mut(tree.get_inner()).for_all_in_rect_mut(bot::convert_to_nan(*mouse.get_rect()),&mut |a:&mut BBox<NotNaN<f32>,Bot>|{
                                 bot::collide_mouse(&mut a.inner,&bot_prop,&mouse);
                             });
-                            WrapAround::handle_mouse(bot_prop,tree.get_inner(),border,&mouse);
+                            //WrapAround::handle_mouse(bot_prop,tree.get_inner(),border,&mouse);
                         }
+
+                        borders::handle(tree.get_inner(),border,bot_prop);
 
 
                         TDraw::update(&self.border,&tree.get_inner(),tree_verts);

@@ -6,12 +6,14 @@ extern crate ascii_num;
 extern crate dinotree_alg;
 extern crate dinotree;
 extern crate dinotree_measure;
+extern crate num;
 
 mod botlib;
 mod sys;
 mod menusys;
 mod wrap_around;
 mod menu_primitives;
+mod borders;
 pub mod vec;
 
 pub use menusys::MenuGame;
