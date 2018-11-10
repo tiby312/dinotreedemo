@@ -71,10 +71,11 @@ impl BotSystem{
     pub fn new(num_bots:usize) -> (BotSystem,Rect<f32>) {
         
         let bot_prop=BotProp{
-            radius:Dist::new(10.0),
+            radius:Dist::new(12.0),
             collision_drag:0.01,
-            collision_push:0.03,
-            minimum_dis_sqr:0.0001
+            collision_push:1.0,
+            minimum_dis_sqr:0.0001,
+            viscousity_coeff:0.06
         };
 
         let (bots,container_rect) = bot::create_bots(num_bots,&bot_prop).unwrap();
@@ -83,8 +84,8 @@ impl BotSystem{
 
 
         let mouse_prop=MouseProp{
-            radius:Dist::new(0.01),
-            force:0.01
+            radius:Dist::new(100.0),
+            force:2.0
         };
         let b=BotSystem {
             mouse_prop:mouse_prop,

@@ -8,6 +8,7 @@ pub struct BotProp {
     pub collision_push: f32,
     pub collision_drag: f32,
     pub minimum_dis_sqr: f32,
+    pub viscousity_coeff: f32
 }
 
 
@@ -74,7 +75,7 @@ impl BotProp{
         let push_force2=offset*(push2/dis);
 
         //TODO hardcoded value
-        let viscous=velocity_diff*-0.03*ammount_touching;
+        let viscous=velocity_diff*-prop.viscousity_coeff*ammount_touching;
 
         bots[0].acc+=push_force1;
         bots[0].acc+=viscous;
@@ -137,10 +138,15 @@ impl Bot{
         Bot{pos,vel,acc}
     }
 
+    #[inline]
     pub fn pos(&self)->&Vec2{
         &self.pos
     }
 
+    #[inline]
+    pub fn vel(&self)->&Vec2{
+        &self.vel
+    }
 }
 
 
@@ -152,7 +158,7 @@ impl Bot{
 pub struct NoBots;
 pub fn create_bots(num_bot:usize,bot_prop: &BotProp)->Result<(Vec<Bot>,axgeom::Rect<f32>),NoBots>{
     
-    let s=dists::spiral::Spiral::new([400.0,400.0],12.0,1.0);
+    let s=dists::spiral::Spiral::new([0.0,0.0],12.0,1.0);
 
     let bots:Vec<Bot>=s.take(num_bot).map(|pos|Bot::new(&Vec2::new(pos[0] as f32,pos[1] as f32))).collect();
 
