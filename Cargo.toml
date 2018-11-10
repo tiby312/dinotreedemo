@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Ken Reed <kenakioreed@gmail.com>"]
 
 [dependencies]
+dists={git="https://github.com/tiby312/dinodists.git"}
 ordered-float = "0.5.0"
 compt = "1.2.2"
 axgeom = "1.0.1"
@@ -11,6 +12,5 @@ dinotree = "0.1.2"
 num = "0.2.0"
 #dinotree_alg="0.1.1"
 dinotree_alg={path="../dinotree_alg"}
-ascii_num = "0.1.2"
 #dinotree_measure={git="https://github.com/tiby312/dinotree_measure"}
 dinotree_measure={path="../dinotree_measure"}
