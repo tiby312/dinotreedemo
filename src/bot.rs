@@ -120,18 +120,18 @@ impl BotProp{
 
 #[derive(Copy,Clone,Debug)]
 pub struct Bot{
-    pub(crate) pos: Vec2,
-    pub(crate) vel: Vec2,
-    pub(crate) acc: Vec2,
+    pub pos: Vec2,
+    pub vel: Vec2,
+    pub acc: Vec2,
 }
 impl Bot{
-    pub(crate) fn create_bbox(&self,radius:f32)->Rect<NotNaN<f32>>{
+    pub fn create_bbox(&self,radius:f32)->Rect<NotNaN<f32>>{
         let p=self.pos.0;
         let r=radius;
         let r=Rect::new(p[0]-r,p[0]+r,p[1]-r,p[1]+r);
         convert_to_nan(r)
     }
-    pub(crate) fn new(a:&Vec2)->Bot{
+    pub fn new(a:&Vec2)->Bot{
         let pos=*a;
         let vel=Vec2([0.0;2]);
         let acc=vel;

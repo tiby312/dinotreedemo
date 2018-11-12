@@ -1,6 +1,7 @@
 use std;
 use axgeom;
 ///A 2d point made up of f32's with a way to get the value on a particular axis easily.
+#[repr(transparent)]
 #[derive(Copy,Clone,Debug)]
 #[must_use]
 pub struct Vec2(pub [f32;2]);

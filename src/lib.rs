@@ -52,6 +52,49 @@ type Tree=dinotree::DinoTree<axgeom::YAXISS,(),dinotree::BBox<NotNaN<f32>,Bot>>;
 
 
 
+//input:
+//a minimum rectangle that must be visible in the game world
+//the window dimensions.
+//output:
+//the game world dimensions
+pub fn compute_border(rect:Rect<f32>,window:[f32;2])->Rect<f32>{
+    
+    println!("game word minimum={:?}",rect);
+    println!("window={:?}",window);
+    let target_aspect_ratio=window[0]/window[1];
+
+
+    let ((x1,x2),(y1,y2))=rect.get();
+    let w=x2-x1;
+    let h=y2-y1;
+
+    let current_aspect_ratio=w/h;
+
+
+    let mut xx=0.0;
+    let mut yy=0.0;
+    if target_aspect_ratio<current_aspect_ratio{
+        //target is thinner
+        yy=-h+(window[1]*w)/window[0];
+    }else{
+        //target is wider
+        xx=window[0]*h/window[1]-w;
+    }
+
+    let xx_half=xx/2.0;
+    let yy_half=yy/2.0;
+
+    let xx1=x1-xx_half;
+    let xx2=x2+xx_half;
+
+    let yy1=y1-yy_half;
+    let yy2=y2+yy_half;
+
+    let r=Rect::new(xx1,xx2,yy1,yy2);
+    println!("game world target={:?}",r);
+    r
+}
+
 pub struct BotSystem {
     mouse_prop:MouseProp,
     bots: Vec<Bot>,
@@ -61,14 +104,14 @@ pub struct BotSystem {
 
 impl Drop for BotSystem{
     fn drop(&mut self){
-        self.session.finish();
+        //self.session.finish();
     }
 }
 
 
 impl BotSystem{
 
-    pub fn new(num_bots:usize) -> (BotSystem,Rect<f32>) {
+    pub fn new(num_bots:usize) -> (BotSystem,Rect<f32>,f32) {
         
         let bot_prop=BotProp{
             radius:Dist::new(12.0),
@@ -93,12 +136,12 @@ impl BotSystem{
             bot_prop,
             session
         };
-        (b,container_rect)
+        (b,container_rect,bot_prop.radius.dis()*0.7)
     }
 
-    pub fn get_bots(&self)->(f32,&[Bot]){
+    pub fn get_bots(&self)->&[Bot]{
         //TODO return Dist prop instead?
-        (self.bot_prop.radius.dis(),&self.bots)
+        &self.bots
     }
 
     pub fn step(&mut self, poses: &[Vec2],border:&Rect<f32>) {
@@ -152,23 +195,28 @@ fn border_handle(tree:&mut Tree,rect:&axgeom::Rect<NotNaN<f32>>){
 
     dinotree_alg::rect::for_all_not_in_rect_mut(tree,rect,|a|{
         //TODO improve this
+        let drag=0.5;
         let pos=&mut a.inner.pos.0;
         let vel=&mut a.inner.vel.0;
         if pos[0]<xx.left{
             pos[0]=xx.left;
             vel[0]=-vel[0];
+            vel[0]*=drag;
         }
         if pos[0]>xx.right{
             pos[0]=xx.right;
             vel[0]=-vel[0];
+            vel[0]*=drag;
         }
         if pos[1]<yy.left{
             pos[1]=yy.left;
             vel[1]=-vel[1];
+            vel[1]*=drag;
         }
         if pos[1]>yy.right{
             pos[1]=yy.right;
             vel[1]=-vel[1];
+            vel[1]*=drag;
         }
     })
 
