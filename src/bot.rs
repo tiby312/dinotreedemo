@@ -1,4 +1,4 @@
-use inner_prelude::*;
+use crate::inner_prelude::*;
 
 
 
@@ -118,6 +118,12 @@ impl BotProp{
 }
 
 
+fn from_point(point:Vec2,radius:f32)->Rect<f32>{
+    let r=radius;
+    let point=point.0;
+    Rect::new(point[0]-r,point[0]+r,point[1]-r,point[1]+r)
+}
+
 #[derive(Copy,Clone,Debug)]
 pub struct Bot{
     pub pos: Vec2,
@@ -131,6 +137,20 @@ impl Bot{
         let r=Rect::new(p[0]-r,p[0]+r,p[1]-r,p[1]+r);
         convert_to_nan(r)
     }
+
+    pub fn create_loose_bbox(&self,radius:f32)->Rect<NotNaN<f32>>{
+        
+        let mut r=convert_to_nan(from_point(self.pos,radius));
+
+
+        let projected_pos=self.pos+self.vel;
+        let r2=convert_to_nan(from_point(projected_pos,radius));
+
+        r.grow_to_fit(&r2);
+        r
+    }
+    
+
     pub fn new(a:&Vec2)->Bot{
         let pos=*a;
         let vel=Vec2([0.0;2]);

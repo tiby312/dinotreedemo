@@ -11,22 +11,22 @@ extern crate num;
 
 mod vec;
 mod bot;
-pub use vec::Vec2;
-pub use bot::Bot;
+pub use crate::vec::Vec2;
+pub use crate::bot::Bot;
 
 mod inner_prelude{
-    pub use bot::*;
-    pub use vec::Vec2;
+    pub use crate::bot::*;
+    pub use crate::vec::Vec2;
     pub use ordered_float::*;
     pub use axgeom::*;
     pub use dinotree_measure::*;
     pub(crate) use dists;
     pub use dinotree::*;
-    pub(crate) use convert_to_nan;
-    pub(crate) use convert_from_nan;
+    pub(crate) use crate::convert_to_nan;
+    pub(crate) use crate::convert_from_nan;
 }
 
-use inner_prelude::*;
+use crate::inner_prelude::*;
 
 
 fn convert_to_nan(r:Rect<f32>)->Rect<NotNaN<f32>>{
@@ -99,7 +99,8 @@ pub struct BotSystem {
     mouse_prop:MouseProp,
     bots: Vec<Bot>,
     bot_prop:BotProp,
-    session:Session,
+    //session:Session,
+    session:DinoTreeCache<axgeom::YAXISS,BBox<NotNaN<f32>,Bot>>
 }
 
 impl Drop for BotSystem{
@@ -123,11 +124,11 @@ impl BotSystem{
 
         let (bots,container_rect) = bot::create_bots(num_bots,&bot_prop).unwrap();
 
-        let session=Session::new();
-
+        //let session=Session::new();
+        let session=DinoTreeCache::new(axgeom::YAXISS);
 
         let mouse_prop=MouseProp{
-            radius:Dist::new(100.0),
+            radius:Dist::new(200.0),
             force:2.0
         };
         let b=BotSystem {
@@ -150,26 +151,40 @@ impl BotSystem{
 
         {                
             let bot_prop=&self.bot_prop;
-
+            
+            let tree=self.session.get_tree_normal(&self.bots,|bot|{
+                bot.create_bbox(bot_prop.radius.dis())
+            });
+            
+            /*
             let mut tree = DinoTreeMeasure::new(axgeom::YAXISS,&self.bots,|bot|{
                 bot.create_bbox(bot_prop.radius.dis())
             });
-
+            
             tree.query_mut(&mut self.session,|a,b|{
                 bot_prop.collide(&mut a.inner,&mut b.inner);
             });
+            */
+            
 
+
+            
+            dinotree_alg::colfind::query_mut(tree.as_ref_mut(),|a,b|{
+                bot_prop.collide(&mut a.inner,&mut b.inner);
+            });
+            
             for k in poses{
                 let mouse=Mouse::new(k,&self.mouse_prop);
                  
-                let _ = dinotree_alg::multirect::multi_rect_mut(tree.get_inner()).for_all_in_rect_mut(convert_to_nan(*mouse.get_rect()),&mut |a:&mut BBox<NotNaN<f32>,Bot>|{
+                let _ = dinotree_alg::multirect::multi_rect_mut(tree.as_ref_mut()).for_all_in_rect_mut(convert_to_nan(*mouse.get_rect()),&mut |a:&mut BBox<NotNaN<f32>,Bot>|{
                     bot_prop.collide_mouse(&mut a.inner,&mouse);
                 });
             }
 
-            border_handle(tree.get_inner(),&border);
+            border_handle(tree,&border);
             
-            tree.get_inner().apply(&mut self.bots,|b,t|*t=b.inner);
+
+            tree.apply(&mut self.bots,|b,t|*t=b.inner);
         }
 
         //update bots
@@ -193,7 +208,7 @@ fn border_handle(tree:&mut Tree,rect:&axgeom::Rect<NotNaN<f32>>){
     let xx=rect2.get_range(axgeom::XAXISS);
     let yy=rect2.get_range(axgeom::YAXISS);
 
-    dinotree_alg::rect::for_all_not_in_rect_mut(tree,rect,|a|{
+    dinotree_alg::rect::for_all_not_in_rect_mut(tree.as_ref_mut(),rect,|a|{
         //TODO improve this
         let drag=0.5;
         let pos=&mut a.inner.pos.0;
