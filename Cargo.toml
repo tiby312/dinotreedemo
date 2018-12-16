@@ -15,4 +15,4 @@ num = "0.2.0"
 #dinotree_alg="0.1.1"
 dinotree_alg={path="../dinotree_alg"}
 #dinotree_measure={git="https://github.com/tiby312/dinotree_measure"}
-dinotree_measure={path="../dinotree_measure"}
+#dinotree_measure={path="../dinotree_measure"}

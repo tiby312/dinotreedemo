@@ -4,7 +4,7 @@ extern crate compt;
 extern crate ordered_float;
 extern crate dinotree_alg;
 extern crate dinotree;
-extern crate dinotree_measure;
+//extern crate dinotree_measure;
 extern crate dists;
 extern crate num;
 
@@ -19,7 +19,7 @@ mod inner_prelude{
     pub use crate::vec::Vec2;
     pub use ordered_float::*;
     pub use axgeom::*;
-    pub use dinotree_measure::*;
+    //pub use dinotree_measure::*;
     pub(crate) use dists;
     pub use dinotree::*;
     pub(crate) use crate::convert_to_nan;
@@ -100,7 +100,7 @@ pub struct BotSystem {
     bots: Vec<Bot>,
     bot_prop:BotProp,
     //session:Session,
-    session:DinoTreeCache<axgeom::YAXISS,BBox<NotNaN<f32>,Bot>>
+    //session:DinoTreeCache<axgeom::YAXISS,BBox<NotNaN<f32>,Bot>>
 }
 
 impl Drop for BotSystem{
@@ -125,7 +125,7 @@ impl BotSystem{
         let (bots,container_rect) = bot::create_bots(num_bots,&bot_prop).unwrap();
 
         //let session=Session::new();
-        let session=DinoTreeCache::new(axgeom::YAXISS);
+        //let session=DinoTreeCache::new(axgeom::YAXISS);
 
         let mouse_prop=MouseProp{
             radius:Dist::new(200.0),
@@ -135,7 +135,7 @@ impl BotSystem{
             mouse_prop:mouse_prop,
             bots,
             bot_prop,
-            session
+            //session
         };
         (b,container_rect,bot_prop.radius.dis()*0.7)
     }
@@ -152,9 +152,11 @@ impl BotSystem{
         {                
             let bot_prop=&self.bot_prop;
             
+            /*
             let tree=self.session.get_tree_normal(&self.bots,|bot|{
                 bot.create_bbox(bot_prop.radius.dis())
             });
+            */
             
             /*
             let mut tree = DinoTreeMeasure::new(axgeom::YAXISS,&self.bots,|bot|{
@@ -165,11 +167,13 @@ impl BotSystem{
                 bot_prop.collide(&mut a.inner,&mut b.inner);
             });
             */
+            let mut tree=dinotree::DinoTreeBuilder::new(axgeom::YAXISS,(),&self.bots,|bot|{
+                bot.create_bbox(bot_prop.radius.dis())
+            }).build_par();
             
 
 
-            
-            dinotree_alg::colfind::query_mut(tree.as_ref_mut(),|a,b|{
+            dinotree_alg::colfind::QueryBuilder::new(tree.as_ref_mut()).query_par(|a,b|{
                 bot_prop.collide(&mut a.inner,&mut b.inner);
             });
             
@@ -181,7 +185,7 @@ impl BotSystem{
                 });
             }
 
-            border_handle(tree,&border);
+            border_handle(&mut tree,&border);
             
 
             tree.apply(&mut self.bots,|b,t|*t=b.inner);
