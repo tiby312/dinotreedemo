@@ -4,7 +4,6 @@ extern crate compt;
 extern crate ordered_float;
 extern crate dinotree_alg;
 extern crate dinotree;
-//extern crate dinotree_measure;
 extern crate dists;
 extern crate num;
 
@@ -19,7 +18,6 @@ mod inner_prelude{
     pub use crate::vec::Vec2;
     pub use ordered_float::*;
     pub use axgeom::*;
-    //pub use dinotree_measure::*;
     pub(crate) use dists;
     pub use dinotree::*;
     pub(crate) use crate::convert_to_nan;
@@ -48,7 +46,7 @@ fn convert_from_nan(r:Rect<NotNaN<f32>>)->Rect<f32>{
 
 
 
-type Tree=dinotree::DinoTree<axgeom::YAXISS,(),dinotree::BBox<NotNaN<f32>,Bot>>;
+type Tree=dinotree::DinoTree<axgeom::YAXISS,dinotree::BBox<NotNaN<f32>,Bot>>;
 
 
 
@@ -167,9 +165,12 @@ impl BotSystem{
                 bot_prop.collide(&mut a.inner,&mut b.inner);
             });
             */
-            let mut tree=dinotree::DinoTreeBuilder::new(axgeom::YAXISS,(),&self.bots,|bot|{
+            let mut tree=dinotree::DinoTreeBuilder::new(axgeom::YAXISS,&self.bots,|bot|{
                 bot.create_bbox(bot_prop.radius.dis())
             }).build_par();
+
+            //TODO remove
+            assert!(tree.as_ref().are_invariants_met());
             
 
 
