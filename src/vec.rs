@@ -29,7 +29,7 @@ impl Vec2 {
     }
     ///Calculates the dot product.
     #[inline(always)]
-    pub fn inner_product(&self, b: &Vec2) -> f32 {
+    pub fn inner_product(self, b: Vec2) -> f32 {
         let a=&self.0;
         let b=&b.0;
         a[0] * b[0] + a[1] * b[1]
@@ -39,19 +39,19 @@ impl Vec2 {
     ///If the length of the vec is zero, this will panic.
     #[inline(always)]
     pub fn truncate(&mut self, nlen: f32) {
-        if self.len_sqr()<nlen.powi(2){
-            *self = *self / self.len();
-            *self = *self * nlen;
+        if self.dis_sqr()<nlen.powi(2){
+            *self /= self.dis();
+            *self *= nlen;
         }
     }
 
     #[inline(always)]
-    pub fn rotate90(&self) -> Vec2 {
+    pub fn rotate90(self) -> Vec2 {
         self.rotate_by(Vec2([0.0, 1.0]))
     }
 
     #[inline(always)]
-    pub fn rotate_by(&self, b: Vec2) -> Vec2 {
+    pub fn rotate_by(self, b: Vec2) -> Vec2 {
         let a=&self.0;
         let b=&b.0;
         Vec2([a[0] * b[0] - a[1] * b[1],
@@ -61,12 +61,13 @@ impl Vec2 {
 
     ///Calculates len using sqrt().
     #[inline(always)]
-    pub fn len(&self) -> f32 {
-        self.len_sqr().sqrt()
+    pub fn dis(self) -> f32 {
+        self.dis_sqr().sqrt()
     }
 
+
     #[inline(always)]
-    pub fn len_sqr(&self) -> f32 {
+    pub fn dis_sqr(self) -> f32 {
         let a=&self.0;
         a[0]*a[0]+a[1]*a[1]
     }
@@ -120,6 +121,16 @@ impl std::ops::MulAssign<f32> for Vec2 {
         let a=&mut self.0;
         a[0]*=rhs;
         a[1]*=rhs;
+    }
+}
+
+impl std::ops::DivAssign<f32> for Vec2 {
+
+    #[inline(always)]
+    fn div_assign(&mut self, rhs: f32) {
+        let a=&mut self.0;
+        a[0]/=rhs;
+        a[1]/=rhs;
     }
 }
 

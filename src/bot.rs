@@ -13,6 +13,7 @@ pub struct BotProp {
 
 
 
+
 impl BotProp{
 
 
@@ -30,12 +31,14 @@ impl BotProp{
             let a=3.0*input*input;
             a.min(1.0)
         }
+
+        
         let prop=self;
         let bots=[a,b];
 
         let offset = bots[0].pos - bots[1].pos;
 
-        let dis_sqr = offset.len_sqr();
+        let dis_sqr = offset.dis_sqr();
         
         if dis_sqr >= prop.radius.dis2_squared() {
             //They not touching (bots are circular).
@@ -46,15 +49,8 @@ impl BotProp{
 
         let sum_rad = prop.radius.dis2();
 
-        let dis = dis_sqr.sqrt(); //Faster version of this somewhere? //can we get what we want to just using dis sqr???
+        let dis = dis_sqr.sqrt();
 
-        //TODO #[cold]
-        if dis<0.0001{
-            let vec=Vec2::new(prop.collision_push,0.0); //TODO dont hardcode. and test
-            bots[0].acc+=vec;
-            bots[1].acc+=-vec;
-            return;
-        }
         
         //0 if barely touching (not touching)
         //1 if directly on top of each other
@@ -66,7 +62,7 @@ impl BotProp{
         
         let velocity_diff=bots[0].vel-bots[1].vel;
 
-        let drag=-prop.collision_drag*ammount_touching*velocity_diff.inner_product(&offset);
+        let drag=-prop.collision_drag*ammount_touching*velocity_diff.inner_product(offset);
             
         let push1=drag+push_mag;
         let push2=-drag-push_mag;
@@ -74,7 +70,6 @@ impl BotProp{
         let push_force1=offset*(push1/dis);
         let push_force2=offset*(push2/dis);
 
-        //TODO hardcoded value
         let viscous=velocity_diff*-prop.viscousity_coeff*ammount_touching;
 
         bots[0].acc+=push_force1;
@@ -92,7 +87,7 @@ impl BotProp{
     pub fn collide_mouse(&self,bot:&mut Bot,mouse:&Mouse){
         let prop=self;
         let offset = *mouse.get_midpoint() - bot.pos;
-        let dis_sqr = offset.len_sqr();
+        let dis_sqr = offset.dis_sqr();
         
         let sum_rad=mouse.get_radius() + prop.radius.dis();
         if dis_sqr < sum_rad*sum_rad {
@@ -151,8 +146,7 @@ impl Bot{
     }
     
 
-    pub fn new(a:&Vec2)->Bot{
-        let pos=*a;
+    pub fn new(pos:Vec2)->Bot{
         let vel=Vec2([0.0;2]);
         let acc=vel;
         Bot{pos,vel,acc}
@@ -180,7 +174,7 @@ pub fn create_bots(num_bot:usize,bot_prop: &BotProp)->Result<(Vec<Bot>,axgeom::R
     
     let s=dists::spiral::Spiral::new([0.0,0.0],12.0,1.0);
 
-    let bots:Vec<Bot>=s.take(num_bot).map(|pos|Bot::new(&Vec2::new(pos[0] as f32,pos[1] as f32))).collect();
+    let bots:Vec<Bot>=s.take(num_bot).map(|pos|Bot::new(Vec2::new(pos[0] as f32,pos[1] as f32))).collect();
 
     let radius=bot_prop.radius.dis();
 
@@ -225,9 +219,9 @@ pub struct Mouse{
     pub rect:axgeom::Rect<f32>
 }
 impl Mouse{
-    pub fn new(pos:&Vec2,prop:&MouseProp)->Mouse{
+    pub fn new(pos:Vec2,prop:&MouseProp)->Mouse{
         let mut m:Mouse=unsafe{std::mem::uninitialized()};
-        m.mouse_prop=*prop;
+        m.mouse_prop= *prop;
         m.move_to(pos);
         m
     }
@@ -241,8 +235,8 @@ impl Mouse{
     pub fn get_radius(&self)->f32{
         self.mouse_prop.radius.dis()
     }
-    pub fn move_to(&mut self,pos:&Vec2){
-        self.midpoint=*pos;
+    pub fn move_to(&mut self,pos:Vec2){
+        self.midpoint= pos;
         let p=self.midpoint.0;
         let r=self.mouse_prop.radius.dis();
         let r=axgeom::Rect::new(p[0]-r,p[0]+r,p[1]-r,p[1]+r);

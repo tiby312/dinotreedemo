@@ -32,13 +32,12 @@ fn convert_to_nan(r:Rect<f32>)->Rect<NotNaN<f32>>{
     let a=r.get_range(axgeom::XAXISS);
     let b=r.get_range(axgeom::YAXISS);
     
-    let rect=Rect::new(
+    Rect::new(
         NotNaN::new(a.left).unwrap(),
         NotNaN::new(a.right).unwrap(),
         NotNaN::new(b.left).unwrap(),
         NotNaN::new(b.right).unwrap()
-        );
-    rect
+        )
 }
 fn convert_from_nan(r:Rect<NotNaN<f32>>)->Rect<f32>{
     unsafe{std::mem::transmute(r)}
@@ -69,15 +68,16 @@ pub fn compute_border(rect:Rect<f32>,window:[f32;2])->Rect<f32>{
     let current_aspect_ratio=w/h;
 
 
-    let mut xx=0.0;
-    let mut yy=0.0;
-    if target_aspect_ratio<current_aspect_ratio{
+    //let mut xx=0.0;
+    //let mut yy=0.0;
+    let [xx,yy]=if target_aspect_ratio<current_aspect_ratio{
         //target is thinner
-        yy=-h+(window[1]*w)/window[0];
+        [0.0,-h+(window[1]*w)/window[0]]
+
     }else{
         //target is wider
-        xx=window[0]*h/window[1]-w;
-    }
+        [window[0]*h/window[1]-w,0.0]
+    };
 
     let xx_half=xx/2.0;
     let yy_half=yy/2.0;
@@ -114,7 +114,7 @@ impl BotSystem{
         
         let bot_prop=BotProp{
             radius:Dist::new(12.0),
-            collision_drag:0.01,
+            collision_drag:0.005,
             collision_push:1.0,
             minimum_dis_sqr:0.0001,
             viscousity_coeff:0.06
@@ -130,10 +130,9 @@ impl BotSystem{
             force:2.0
         };
         let b=BotSystem {
-            mouse_prop:mouse_prop,
+            mouse_prop,
             bots,
             bot_prop,
-            //session
         };
         (b,container_rect,bot_prop.radius.dis()*0.7)
     }
@@ -167,19 +166,19 @@ impl BotSystem{
             */
             let mut tree=dinotree::DinoTreeBuilder::new(axgeom::YAXISS,&self.bots,|bot|{
                 bot.create_bbox(bot_prop.radius.dis())
-            }).build_par();
+            }).build_seq();
 
             //TODO remove
             assert!(tree.as_ref().are_invariants_met());
             
 
 
-            dinotree_alg::colfind::QueryBuilder::new(tree.as_ref_mut()).query_par(|a,b|{
+            dinotree_alg::colfind::QueryBuilder::new(tree.as_ref_mut()).query_seq(|a,b|{
                 bot_prop.collide(&mut a.inner,&mut b.inner);
             });
             
             for k in poses{
-                let mouse=Mouse::new(k,&self.mouse_prop);
+                let mouse=Mouse::new(*k,&self.mouse_prop);
                  
                 let _ = dinotree_alg::multirect::multi_rect_mut(tree.as_ref_mut()).for_all_in_rect_mut(convert_to_nan(*mouse.get_rect()),&mut |a:&mut BBox<NotNaN<f32>,Bot>|{
                     bot_prop.collide_mouse(&mut a.inner,&mouse);
@@ -220,22 +219,22 @@ fn border_handle(tree:&mut Tree,rect:&axgeom::Rect<NotNaN<f32>>){
         let vel=&mut a.inner.vel.0;
         if pos[0]<xx.left{
             pos[0]=xx.left;
-            vel[0]=-vel[0];
+            vel[0]= -vel[0];
             vel[0]*=drag;
         }
         if pos[0]>xx.right{
             pos[0]=xx.right;
-            vel[0]=-vel[0];
+            vel[0]= -vel[0];
             vel[0]*=drag;
         }
         if pos[1]<yy.left{
             pos[1]=yy.left;
-            vel[1]=-vel[1];
+            vel[1]= -vel[1];
             vel[1]*=drag;
         }
         if pos[1]>yy.right{
             pos[1]=yy.right;
-            vel[1]=-vel[1];
+            vel[1]= -vel[1];
             vel[1]*=drag;
         }
     })
