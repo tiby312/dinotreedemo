@@ -114,10 +114,10 @@ impl BotSystem{
         
         let bot_prop=BotProp{
             radius:Dist::new(12.0),
-            collision_drag:0.005,
-            collision_push:1.0,
+            collision_drag:0.003,
+            collision_push:0.5,
             minimum_dis_sqr:0.0001,
-            viscousity_coeff:0.06
+            viscousity_coeff:0.03
         };
 
         let (bots,container_rect) = bot::create_bots(num_bots,&bot_prop).unwrap();
@@ -166,14 +166,14 @@ impl BotSystem{
             */
             let mut tree=dinotree::DinoTreeBuilder::new(axgeom::YAXISS,&self.bots,|bot|{
                 bot.create_bbox(bot_prop.radius.dis())
-            }).build_seq();
+            }).build_par();
 
             //TODO remove
             assert!(tree.as_ref().are_invariants_met());
             
 
 
-            dinotree_alg::colfind::QueryBuilder::new(tree.as_ref_mut()).query_seq(|a,b|{
+            dinotree_alg::colfind::QueryBuilder::new(tree.as_ref_mut()).query_par(|a,b|{
                 bot_prop.collide(&mut a.inner,&mut b.inner);
             });
             
