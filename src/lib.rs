@@ -1,6 +1,5 @@
 #![feature(try_from)]
 extern crate axgeom;
-extern crate compt;
 extern crate ordered_float;
 extern crate dinotree_alg;
 extern crate dinotree;
@@ -127,7 +126,7 @@ impl BotSystem{
 
         let mouse_prop=MouseProp{
             radius:Dist::new(200.0),
-            force:2.0
+            force:1.0
         };
         let b=BotSystem {
             mouse_prop,
