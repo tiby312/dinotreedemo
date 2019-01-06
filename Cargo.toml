@@ -9,6 +9,6 @@ edition = "2018"
 dists={git="https://github.com/tiby312/dinodists.git"}
 ordered-float = "0.5.0"
 axgeom = "1.0.5"
-dinotree = "0.2.1"
+dinotree = "0.2.7"
 num = "0.2.0"
 dinotree_alg="0.2.2"
