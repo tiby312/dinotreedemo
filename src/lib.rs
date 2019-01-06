@@ -1,4 +1,4 @@
-#![feature(try_from)]
+//#![feature(try_from)]
 extern crate axgeom;
 extern crate ordered_float;
 extern crate dinotree_alg;
