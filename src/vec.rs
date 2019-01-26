@@ -27,6 +27,11 @@ impl Vec2 {
             &mut self.0[1]
         }
     }
+
+    pub fn set_zero(&mut self){
+        self.0[0]=0.0;
+        self.0[1]=0.0;
+    }
     ///Calculates the dot product.
     #[inline(always)]
     pub fn inner_product(self, b: Vec2) -> f32 {
@@ -145,6 +150,16 @@ impl std::ops::AddAssign for Vec2 {
     }
 }
 
+impl std::ops::SubAssign for Vec2 {
+
+    #[inline(always)]
+    fn sub_assign(&mut self, other: Vec2) {
+        let a=&mut self.0;
+        let b=&other.0;
+        a[0]-=b[0];
+        a[1]-=b[1];
+    }
+}
 impl std::ops::Sub for Vec2 {
     type Output = Vec2;
 

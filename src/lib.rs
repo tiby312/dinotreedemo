@@ -115,6 +115,7 @@ impl BotSystem{
             radius:Dist::new(12.0),
             collision_drag:0.003,
             collision_push:0.5,
+            //collision_push:0.1,
             minimum_dis_sqr:0.0001,
             viscousity_coeff:0.03
         };
@@ -148,21 +149,11 @@ impl BotSystem{
         {                
             let bot_prop=&self.bot_prop;
             
-            /*
-            let tree=self.session.get_tree_normal(&self.bots,|bot|{
-                bot.create_bbox(bot_prop.radius.dis())
-            });
-            */
-            
-            /*
-            let mut tree = DinoTreeMeasure::new(axgeom::YAXISS,&self.bots,|bot|{
-                bot.create_bbox(bot_prop.radius.dis())
-            });
-            
-            tree.query_mut(&mut self.session,|a,b|{
-                bot_prop.collide(&mut a.inner,&mut b.inner);
-            });
-            */
+
+
+            //let sr=bot_prop.radius.dis()*0.2;
+            //bot::handle_rigid_body(&mut self.bots,sr,sr*0.2,10);
+
             let mut tree=dinotree::DinoTreeBuilder::new(axgeom::YAXISS,&self.bots,|bot|{
                 bot.create_bbox(bot_prop.radius.dis())
             }).build_par();

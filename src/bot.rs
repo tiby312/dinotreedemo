@@ -2,6 +2,11 @@ use crate::inner_prelude::*;
 
 
 
+
+
+
+
+
 #[derive(Copy,Clone,Debug)]
 pub struct BotProp {
     pub radius: Dist,
@@ -133,6 +138,7 @@ impl Bot{
         convert_to_nan(r)
     }
 
+    /*
     pub fn create_loose_bbox(&self,radius:f32)->Rect<NotNaN<f32>>{
         
         let mut r=convert_to_nan(from_point(self.pos,radius));
@@ -144,7 +150,7 @@ impl Bot{
         r.grow_to_fit(&r2);
         r
     }
-    
+    */
 
     pub fn new(pos:Vec2)->Bot{
         let vel=Vec2([0.0;2]);
@@ -160,6 +166,70 @@ impl Bot{
     #[inline]
     pub fn vel(&self)->&Vec2{
         &self.vel
+    }
+
+    pub fn push_away(&mut self,b:&mut Self,radius:f32,max_amount:f32){
+        let mut diff=b.pos-self.pos;
+
+        let dis=diff.dis();
+
+        if dis<0.000001{
+            return;
+        }
+
+        let mag=max_amount.min(radius*2.0-dis);
+        if mag<0.0{
+            return;
+        }
+        //let mag=max_amount;
+        diff*=mag/dis;
+
+        self.acc-=diff;
+        b.acc+=diff;
+
+        //TODO if we have moved too far away, move back to point of collision!!!
+        {
+
+        }
+    }
+}
+
+
+
+
+pub fn handle_rigid_body(bodies:&mut [Bot],radius:f32,max_move_every_iteration:f32,max_num_iteration:usize){
+    
+    for body in bodies.iter_mut(){
+        body.acc.set_zero();
+    }
+
+    let ball_size=radius;
+    let push_rate=max_move_every_iteration;//push_unit / (num_iteration as f64);
+
+    for i in 0..max_num_iteration{        
+        let mut tree=DinoTreeBuilder::new(axgeom::YAXISS,bodies,|a|a.create_bbox(ball_size+push_rate)).build_par();
+
+        //let mut counter=0;
+        dinotree_alg::colfind::QueryBuilder::new(tree.as_ref_mut()).query_par(|a,b|{
+            a.inner.push_away(&mut b.inner,ball_size,push_rate);
+            //counter+=1;
+        });    
+        /*
+        if counter==0{
+            println!("exiting early at iteration={:?}",i);
+            break;
+        }
+        */
+
+        tree.apply(bodies,|a,b|*b=a.inner);
+
+        for body in bodies.iter_mut(){
+            if body.acc.dis()>0.0000001{
+                body.acc.truncate(push_rate);
+                body.pos+=body.acc;
+                body.acc.set_zero();
+            }
+        }
     }
 }
 
