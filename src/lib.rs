@@ -143,7 +143,7 @@ impl BotSystem{
             }).build_par();
 
             //TODO remove
-            //assert!(tree.are_invariants_met());
+            assert!(assert_invariants(&tree));
             
 
 
