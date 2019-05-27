@@ -7,44 +7,28 @@ extern crate dists;
 extern crate num;
 
 
-mod vec;
 mod bot;
-pub use crate::vec::Vec2;
+//pub use crate::vec::Vec2;
 pub use crate::bot::Bot;
 
 mod inner_prelude{
     pub use crate::bot::*;
-    pub use crate::vec::Vec2;
+    //pub use crate::vec::Vec2;
     pub use ordered_float::*;
     pub use axgeom::*;
     pub(crate) use dists;
     pub use dinotree::*;
-    pub(crate) use crate::convert_to_nan;
-    pub(crate) use crate::convert_from_nan;
+    pub use dinotree::copy::*;
+    //pub(crate) use crate::convert_to_nan;
+    //pub(crate) use crate::convert_from_nan;
 }
 
 use crate::inner_prelude::*;
 
 
-fn convert_to_nan(r:Rect<f32>)->Rect<NotNaN<f32>>{
-
-    let a=r.get_range(axgeom::XAXISS);
-    let b=r.get_range(axgeom::YAXISS);
-    
-    Rect::new(
-        NotNaN::new(a.left).unwrap(),
-        NotNaN::new(a.right).unwrap(),
-        NotNaN::new(b.left).unwrap(),
-        NotNaN::new(b.right).unwrap()
-        )
-}
-fn convert_from_nan(r:Rect<NotNaN<f32>>)->Rect<f32>{
-    unsafe{std::mem::transmute(r)}
-}
 
 
-
-type Tree=dinotree::DinoTree<axgeom::YAXISS,dinotree::BBox<NotNaN<f32>,Bot>>;
+type Tree=DinoTree<axgeom::YAXISS,BBox<NotNaN<f32>,Bot>>;
 
 
 
@@ -120,8 +104,8 @@ impl BotSystem{
             viscousity_coeff:0.03
         };
 
-        let (bots,container_rect) = bot::create_bots(num_bots,&bot_prop).unwrap();
-
+        let (bots,mut container_rect) = bot::create_bots(num_bots,&bot_prop).unwrap();
+        container_rect.grow(200.0);
         //let session=Session::new();
         //let session=DinoTreeCache::new(axgeom::YAXISS);
 
@@ -154,23 +138,23 @@ impl BotSystem{
             //let sr=bot_prop.radius.dis()*0.2;
             //bot::handle_rigid_body(&mut self.bots,sr,sr*0.2,10);
 
-            let mut tree=dinotree::DinoTreeBuilder::new(axgeom::YAXISS,&self.bots,|bot|{
-                bot.create_bbox(bot_prop.radius.dis())
+            let mut tree=DinoTreeBuilder::new(axgeom::YAXISS,&self.bots,|bot|{
+                convert_to_nan(bot.create_bbox(bot_prop))
             }).build_par();
 
             //TODO remove
-            assert!(tree.as_ref().are_invariants_met());
+            //assert!(tree.are_invariants_met());
             
 
 
-            dinotree_alg::colfind::QueryBuilder::new(tree.as_ref_mut()).query_par(|a,b|{
+            dinotree_alg::colfind::QueryBuilder::new(&mut tree).query_par(|a,b|{
                 bot_prop.collide(&mut a.inner,&mut b.inner);
             });
             
             for k in poses{
                 let mouse=Mouse::new(*k,&self.mouse_prop);
                  
-                let _ = dinotree_alg::multirect::multi_rect_mut(tree.as_ref_mut()).for_all_in_rect_mut(convert_to_nan(*mouse.get_rect()),&mut |a:&mut BBox<NotNaN<f32>,Bot>|{
+                let _ = dinotree_alg::multirect::multi_rect_mut(&mut tree).for_all_in_rect_mut(convert_to_nan(*mouse.get_rect()),&mut |a:&mut BBox<NotNaN<f32>,Bot>|{
                     bot_prop.collide_mouse(&mut a.inner,&mouse);
                 });
             }
@@ -202,7 +186,7 @@ fn border_handle(tree:&mut Tree,rect:&axgeom::Rect<NotNaN<f32>>){
     let xx=rect2.get_range(axgeom::XAXISS);
     let yy=rect2.get_range(axgeom::YAXISS);
 
-    dinotree_alg::rect::for_all_not_in_rect_mut(tree.as_ref_mut(),rect,|a|{
+    dinotree_alg::rect::for_all_not_in_rect_mut(tree,rect,|a|{
         //TODO improve this
         let drag=0.5;
         let pos=&mut a.inner.pos.0;
