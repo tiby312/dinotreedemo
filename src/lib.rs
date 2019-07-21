@@ -6,21 +6,16 @@ extern crate dinotree;
 extern crate dists;
 extern crate num;
 
-
 mod bot;
-//pub use crate::vec::Vec2;
 pub use crate::bot::Bot;
 
 mod inner_prelude{
     pub use crate::bot::*;
-    //pub use crate::vec::Vec2;
     pub use ordered_float::*;
     pub use axgeom::*;
     pub(crate) use dists;
     pub use dinotree::*;
     pub use dinotree::copy::*;
-    //pub(crate) use crate::convert_to_nan;
-    //pub(crate) use crate::convert_from_nan;
 }
 
 use crate::inner_prelude::*;
@@ -50,9 +45,6 @@ pub fn compute_border(rect:Rect<f32>,window:[f32;2])->Rect<f32>{
 
     let current_aspect_ratio=w/h;
 
-
-    //let mut xx=0.0;
-    //let mut yy=0.0;
     let [xx,yy]=if target_aspect_ratio<current_aspect_ratio{
         //target is thinner
         [0.0,-h+(window[1]*w)/window[0]]
@@ -79,9 +71,7 @@ pub fn compute_border(rect:Rect<f32>,window:[f32;2])->Rect<f32>{
 pub struct BotSystem {
     mouse_prop:MouseProp,
     bots: Vec<Bot>,
-    bot_prop:BotProp,
-    //session:Session,
-    //session:DinoTreeCache<axgeom::YAXISS,BBox<NotNaN<f32>,Bot>>
+    bot_prop:BotProp
 }
 
 impl Drop for BotSystem{
@@ -99,7 +89,6 @@ impl BotSystem{
             radius:Dist::new(12.0),
             collision_drag:0.003,
             collision_push:0.5,
-            //collision_push:0.1,
             minimum_dis_sqr:0.0001,
             viscousity_coeff:0.03
         };
@@ -128,7 +117,7 @@ impl BotSystem{
 
     pub fn step(&mut self, poses: &[Vec2],border:&Rect<f32>) {
         
-        let border=convert_to_nan(*border);
+        let border=border.into_notnan().unwrap();
 
         {                
             let bot_prop=&self.bot_prop;
@@ -139,7 +128,7 @@ impl BotSystem{
             //bot::handle_rigid_body(&mut self.bots,sr,sr*0.2,10);
 
             let mut tree=DinoTreeBuilder::new(axgeom::YAXISS,&self.bots,|bot|{
-                convert_to_nan(bot.create_bbox(bot_prop))
+                bot.create_bbox(bot_prop).into_notnan().unwrap()
             }).build_par();
 
             //TODO remove
@@ -154,12 +143,18 @@ impl BotSystem{
             for k in poses{
                 let mouse=Mouse::new(*k,&self.mouse_prop);
                  
-                let _ = dinotree_alg::multirect::multi_rect_mut(&mut tree).for_all_in_rect_mut(convert_to_nan(*mouse.get_rect()),&mut |a:&mut BBox<NotNaN<f32>,Bot>|{
+                let _ = dinotree_alg::multirect::multi_rect_mut(&mut tree).for_all_in_rect_mut(mouse.get_rect().into_notnan().unwrap(),&mut |a:&mut BBox<NotNaN<f32>,Bot>|{
                     bot_prop.collide_mouse(&mut a.inner,&mouse);
                 });
             }
 
-            border_handle(&mut tree,&border);
+
+            {
+                let rect2=border.into_inner();
+                dinotree_alg::rect::for_all_not_in_rect_mut(&mut tree,&border,|a|{
+                    duckduckgeo::collide_with_border(&mut a.inner,&rect2,0.5);
+                })
+            }
             
 
             tree.apply(&mut self.bots,|b,t|*t=b.inner);
@@ -175,68 +170,5 @@ impl BotSystem{
 
 }
 
-
-
-fn border_handle(tree:&mut Tree,rect:&axgeom::Rect<NotNaN<f32>>){
-
-    let a=rect.get_range(axgeom::XAXISS);
-    let b=rect.get_range(axgeom::YAXISS);
-    let rect2=axgeom::Rect::new(a.left.into_inner(),a.right.into_inner(),b.left.into_inner(),b.right.into_inner());
-    
-    let xx=rect2.get_range(axgeom::XAXISS);
-    let yy=rect2.get_range(axgeom::YAXISS);
-
-    dinotree_alg::rect::for_all_not_in_rect_mut(tree,rect,|a|{
-        //TODO improve this
-        let drag=0.5;
-        let pos=&mut a.inner.pos.0;
-        let vel=&mut a.inner.vel.0;
-        if pos[0]<xx.left{
-            pos[0]=xx.left;
-            vel[0]= -vel[0];
-            vel[0]*=drag;
-        }
-        if pos[0]>xx.right{
-            pos[0]=xx.right;
-            vel[0]= -vel[0];
-            vel[0]*=drag;
-        }
-        if pos[1]<yy.left{
-            pos[1]=yy.left;
-            vel[1]= -vel[1];
-            vel[1]*=drag;
-        }
-        if pos[1]>yy.right{
-            pos[1]=yy.right;
-            vel[1]= -vel[1];
-            vel[1]*=drag;
-        }
-    })
-
-    /*
-        macro_rules! bla{
-            ($axis:ident)=>{
-                let j=$axis;
-                let a=rect.get_range(j).left.into_inner();
-                let b=rect.get_range(j).right.into_inner();
-
-                let mut new_pos=bot.pos.clone();
-
-                if *bot.pos.get_axis(j) < a {
-                    *new_pos.get_axis_mut(j) = b;
-                }
-                if *bot.pos.get_axis(j) > b {
-                    *new_pos.get_axis_mut(j) = a;
-                }
-                bot.pos=new_pos;
-            }
-        }
-        use axgeom::XAXISS;
-        use axgeom::YAXISS;
-        bla!(XAXISS);
-        bla!(YAXISS);
-        */
-
-}
 
 
