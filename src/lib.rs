@@ -1,30 +1,10 @@
-//#![feature(try_from)]
-extern crate axgeom;
-extern crate ordered_float;
-extern crate dinotree_alg;
-extern crate dinotree;
-extern crate dists;
-extern crate num;
-
-mod bot;
-pub use crate::bot::Bot;
-
-mod inner_prelude{
-    pub use crate::bot::*;
-    pub use ordered_float::*;
-    pub use axgeom::*;
-    pub(crate) use dists;
-    pub use dinotree::*;
-    pub use dinotree::copy::*;
-}
-
-use crate::inner_prelude::*;
-
-
-
-
-type Tree=DinoTree<axgeom::YAXISS,BBox<NotNaN<f32>,Bot>>;
-
+use crate::bot::*;
+use ordered_float::*;
+use axgeom::*;
+use dinotree::*;
+use dinotree::copy::*;
+use duckduckgeo::*;
+use duckduckgeo::vec2f32::*;
 
 
 //input:
@@ -74,12 +54,6 @@ pub struct BotSystem {
     bot_prop:BotProp
 }
 
-impl Drop for BotSystem{
-    fn drop(&mut self){
-        //self.session.finish();
-    }
-}
-
 
 impl BotSystem{
 
@@ -93,7 +67,7 @@ impl BotSystem{
             viscousity_coeff:0.03
         };
 
-        let (bots,mut container_rect) = bot::create_bots(num_bots,&bot_prop).unwrap();
+        let (bots,mut container_rect) = create_bots(num_bots,&bot_prop).unwrap();
         container_rect.grow(200.0);
         //let session=Session::new();
         //let session=DinoTreeCache::new(axgeom::YAXISS);
@@ -123,40 +97,30 @@ impl BotSystem{
             let bot_prop=&self.bot_prop;
             
 
-
-            //let sr=bot_prop.radius.dis()*0.2;
-            //bot::handle_rigid_body(&mut self.bots,sr,sr*0.2,10);
-
             let mut tree=DinoTreeBuilder::new(axgeom::YAXISS,&self.bots,|bot|{
                 bot.create_bbox(bot_prop).into_notnan().unwrap()
             }).build_par();
 
-            //TODO remove
-            assert!(assert_invariants(&tree));
+            //assert!(assert_invariants(&tree));
             
-
-
             dinotree_alg::colfind::QueryBuilder::new(&mut tree).query_par(|a,b|{
                 bot_prop.collide(&mut a.inner,&mut b.inner);
             });
-            
+        
             for k in poses{
                 let mouse=Mouse::new(*k,&self.mouse_prop);
+                let mouserect=mouse.get_rect().into_notnan().unwrap();
                  
-                let _ = dinotree_alg::multirect::multi_rect_mut(&mut tree).for_all_in_rect_mut(mouse.get_rect().into_notnan().unwrap(),&mut |a:&mut BBox<NotNaN<f32>,Bot>|{
+                let _ = dinotree_alg::multirect::multi_rect_mut(&mut tree).for_all_in_rect_mut(mouserect,&mut |a:&mut BBox<NotNan<f32>,Bot>|{
                     bot_prop.collide_mouse(&mut a.inner,&mouse);
                 });
             }
-
-
-            {
-                let rect2=border.into_inner();
-                dinotree_alg::rect::for_all_not_in_rect_mut(&mut tree,&border,|a|{
-                    duckduckgeo::collide_with_border(&mut a.inner,&rect2,0.5);
-                })
-            }
             
-
+            let rect2=border.into_inner();
+            dinotree_alg::rect::for_all_not_in_rect_mut(&mut tree,&border,|a|{
+                duckduckgeo::collide_with_border(&mut a.inner,&rect2,0.5);
+            });
+        
             tree.apply(&mut self.bots,|b,t|*t=b.inner);
         }
 
@@ -171,4 +135,36 @@ impl BotSystem{
 }
 
 
+#[derive(Copy,Clone,Debug)]
+pub struct NoBots;
+pub fn create_bots(num_bot:usize,bot_prop: &BotProp)->Result<(Vec<Bot>,axgeom::Rect<f32>),NoBots>{
+    
+    let s=dists::spiral::Spiral::new([0.0,0.0],12.0,1.0);
+
+    let bots:Vec<Bot>=s.take(num_bot).map(|pos|Bot::new(Vec2::new(pos[0] as f32,pos[1] as f32))).collect();
+
+    let rect=bots.iter().fold(None,|rect:Option<Rect<NotNan<f32>>>,bot|{
+        match rect{
+            Some(mut rect)=>{
+                rect.grow_to_fit(&bot.create_bbox(bot_prop).into_notnan().unwrap());
+                Some(rect)
+            },
+            None=>{
+                Some(bot.create_bbox(bot_prop).into_notnan().unwrap())
+            }
+        }
+    });
+
+
+
+    match rect{
+        Some(x)=>{
+            let xx=x.into_inner();
+            Ok((bots,xx))
+        },
+        None=>{
+            Err(NoBots)
+        }
+    }
+}
 
