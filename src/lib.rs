@@ -4,7 +4,10 @@ use axgeom::*;
 use dinotree::*;
 use dinotree::copy::*;
 use duckduckgeo::*;
-use duckduckgeo::vec2f32::*;
+
+use cgmath::prelude::*;
+use cgmath::Vector2;
+use cgmath::vec2;
 
 
 //input:
@@ -89,7 +92,7 @@ impl BotSystem{
         &self.bots
     }
 
-    pub fn step(&mut self, poses: &[Vec2],border:&Rect<f32>) {
+    pub fn step(&mut self, poses: &[Vector2<f32>],border:&Rect<f32>) {
         
         let border=border.into_notnan().unwrap();
 
@@ -128,7 +131,7 @@ impl BotSystem{
         for bot in self.bots.iter_mut() {
             bot.vel+=bot.acc;    
             bot.pos+=bot.vel;
-            bot.acc.0=[0.0;2];
+            bot.acc=Vector2::zero();
         }        
     }
 
@@ -141,7 +144,7 @@ pub fn create_bots(num_bot:usize,bot_prop: &BotProp)->Result<(Vec<Bot>,axgeom::R
     
     let s=dists::spiral::Spiral::new([0.0,0.0],12.0,1.0);
 
-    let bots:Vec<Bot>=s.take(num_bot).map(|pos|Bot::new(Vec2::new(pos[0] as f32,pos[1] as f32))).collect();
+    let bots:Vec<Bot>=s.take(num_bot).map(|pos|Bot::new(vec2(pos[0] as f32,pos[1] as f32))).collect();
 
     let rect=bots.iter().fold(None,|rect:Option<Rect<NotNan<f32>>>,bot|{
         match rect{
