@@ -117,9 +117,8 @@ impl BotSystem{
                 });
             }
             
-            let rect2=border.inner_try_into().unwrap();
             dinotree_alg::rect::for_all_not_in_rect_mut(&mut tree,&border,|a|{
-                duckduckgeo::collide_with_border(&mut a.inner,&rect2,0.5);
+                duckduckgeo::collide_with_border(&mut a.inner,&border,0.5);
             });
         
             tree.apply(&mut self.bots,|b,t|*t=b.inner);
