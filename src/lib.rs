@@ -5,9 +5,7 @@ use dinotree::*;
 use dinotree::copy::*;
 use duckduckgeo::*;
 
-use cgmath::prelude::*;
-use cgmath::Vector2;
-use cgmath::vec2;
+
 
 
 //input:
@@ -92,16 +90,16 @@ impl BotSystem{
         &self.bots
     }
 
-    pub fn step(&mut self, poses: &[Vector2<f32>],border:&Rect<f32>) {
+    pub fn step(&mut self, poses: &[Vec2<f32>],border:&Rect<f32>) {
         
-        let border=border.cast().unwrap();
+        let border=border.inner_try_into().unwrap();
 
         {                
             let bot_prop=&self.bot_prop;
             
 
             let mut tree=DinoTreeBuilder::new(axgeom::YAXISS,&self.bots,|bot|{
-                bot.create_bbox(bot_prop).cast().unwrap()
+                bot.create_bbox(bot_prop).inner_try_into().unwrap()
             }).build_par();
 
             //assert!(assert_invariants(&tree));
@@ -112,14 +110,14 @@ impl BotSystem{
         
             for k in poses{
                 let mouse=Mouse::new(*k,&self.mouse_prop);
-                let mouserect=mouse.get_rect().cast().unwrap();
+                let mouserect=mouse.get_rect().inner_try_into().unwrap();
                  
                 let _ = dinotree_alg::multirect::multi_rect_mut(&mut tree).for_all_in_rect_mut(mouserect,&mut |a:&mut BBox<NotNan<f32>,Bot>|{
                     bot_prop.collide_mouse(&mut a.inner,&mouse);
                 });
             }
             
-            let rect2=border.cast().unwrap();
+            let rect2=border.inner_try_into().unwrap();
             dinotree_alg::rect::for_all_not_in_rect_mut(&mut tree,&border,|a|{
                 duckduckgeo::collide_with_border(&mut a.inner,&rect2,0.5);
             });
@@ -131,7 +129,7 @@ impl BotSystem{
         for bot in self.bots.iter_mut() {
             bot.vel+=bot.acc;    
             bot.pos+=bot.vel;
-            bot.acc=Vector2::zero();
+            bot.acc=vec2(0.0,0.0);
         }        
     }
 
@@ -149,11 +147,11 @@ pub fn create_bots(num_bot:usize,bot_prop: &BotProp)->Result<(Vec<Bot>,axgeom::R
     let rect=bots.iter().fold(None,|rect:Option<Rect<NotNan<f32>>>,bot|{
         match rect{
             Some(mut rect)=>{
-                rect.grow_to_fit(&bot.create_bbox(bot_prop).cast().unwrap());
+                rect.grow_to_fit(&bot.create_bbox(bot_prop).inner_try_into().unwrap());
                 Some(rect)
             },
             None=>{
-                Some(bot.create_bbox(bot_prop).cast().unwrap())
+                Some(bot.create_bbox(bot_prop).inner_try_into().unwrap())
             }
         }
     });
@@ -162,7 +160,7 @@ pub fn create_bots(num_bot:usize,bot_prop: &BotProp)->Result<(Vec<Bot>,axgeom::R
 
     match rect{
         Some(x)=>{
-            let xx=x.cast().unwrap();
+            let xx=x.inner_into();
             Ok((bots,xx))
         },
         None=>{
