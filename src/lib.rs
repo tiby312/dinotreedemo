@@ -63,7 +63,7 @@ impl BotSystem{
         let bot_prop=BotProp{
             radius:Dist::new(12.0),
             collision_drag:0.003,
-            collision_push:0.5,
+            collision_push:1.3,
             minimum_dis_sqr:0.0001,
             viscousity_coeff:0.03
         };
@@ -118,7 +118,7 @@ impl BotSystem{
             }
             
             dinotree_alg::rect::for_all_not_in_rect_mut(&mut tree,&border,|a|{
-                duckduckgeo::collide_with_border(&mut a.inner,&border,0.5);
+                duckduckgeo::collide_with_border(&mut a.inner,border.as_ref(),0.5);
             });
         
             tree.apply(&mut self.bots,|b,t|*t=b.inner);
@@ -141,7 +141,7 @@ pub fn create_bots(num_bot:usize,bot_prop: &BotProp)->Result<(Vec<Bot>,axgeom::R
     
     let s=dists::spiral::Spiral::new([0.0,0.0],12.0,1.0);
 
-    let bots:Vec<Bot>=s.take(num_bot).map(|pos|Bot::new(vec2(pos[0] as f32,pos[1] as f32))).collect();
+    let bots:Vec<Bot>=s.take(num_bot).map(|pos|Bot::new(vec2(pos.x as f32,pos.y as f32))).collect();
 
     let rect=bots.iter().fold(None,|rect:Option<Rect<NotNan<f32>>>,bot|{
         match rect{
