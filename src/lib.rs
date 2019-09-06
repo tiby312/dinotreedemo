@@ -1,10 +1,8 @@
 use crate::bot::*;
 use ordered_float::*;
 use axgeom::*;
-use dinotree::*;
-use dinotree::copy::*;
+use dinotree::prelude::*;
 use duckduckgeo::*;
-
 
 
 
@@ -98,31 +96,52 @@ impl BotSystem{
             let bot_prop=&self.bot_prop;
             
 
-            let mut tree=DinoTreeBuilder::new(axgeom::YAXISS,&self.bots,|bot|{
+            let mut tree=DinoTreeBuilder::new(axgeom::YAXISS,&mut self.bots,|bot|{
                 bot.create_bbox(bot_prop).inner_try_into().unwrap()
-            }).build_par();
+            }).build_seq();
 
             //assert!(assert_invariants(&tree));
             
             dinotree_alg::colfind::QueryBuilder::new(&mut tree).query_par(|a,b|{
-                bot_prop.collide(&mut a.inner,&mut b.inner);
+                bot_prop.collide(a.inner,b.inner);
             });
         
+
             for k in poses{
                 let mouse=Mouse::new(*k,&self.mouse_prop);
                 let mouserect=mouse.get_rect().inner_try_into().unwrap();
                  
-                let _ = dinotree_alg::multirect::multi_rect_mut(&mut tree).for_all_in_rect_mut(mouserect,&mut |a:&mut BBox<NotNan<f32>,Bot>|{
-                    bot_prop.collide_mouse(&mut a.inner,&mouse);
+                use dinotree_alg::rect::for_all_in_rect_mut;
+                for_all_in_rect_mut(&mut tree,&mouserect,|a|{
+                    bot_prop.collide_mouse(a.inner,&mouse);
                 });
             }
             
             dinotree_alg::rect::for_all_not_in_rect_mut(&mut tree,&border,|a|{
-                duckduckgeo::collide_with_border(&mut a.inner,border.as_ref(),0.5);
+                duckduckgeo::collide_with_border(a.inner,border.as_ref(),0.5);
             });
+
+            tree.into_inner(&mut self.bots);
         
-            tree.apply(&mut self.bots,|b,t|*t=b.inner);
         }
+
+        /*
+        {
+            let (miny,maxy)=(border.y.left.into_inner(),border.y.right.into_inner());
+            let diff=maxy-miny;
+            let mid=diff/2.0;
+            for bot in self.bots.iter_mut(){
+                let offset=bot.pos.y-(miny+mid);
+                
+                let offset_dir=offset.signum();
+                let offset_mag=offset.abs();
+                //println!("offset={}",offset);
+                let push=-offset_dir*((offset_mag*0.001).max(0.01));
+                bot.acc.y+=push;
+            }
+        }
+        */
+
 
         //update bots
         for bot in self.bots.iter_mut() {
