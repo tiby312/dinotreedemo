@@ -3,7 +3,7 @@ use ordered_float::*;
 use axgeom::*;
 use dinotree::prelude::*;
 use duckduckgeo::*;
-
+use dinotree_alg::rect::*;
 
 
 //input:
@@ -84,7 +84,6 @@ impl BotSystem{
     }
 
     pub fn get_bots(&self)->&[Bot]{
-        //TODO return Dist prop instead?
         &self.bots
     }
 
@@ -100,7 +99,6 @@ impl BotSystem{
                 bot.create_bbox(bot_prop).inner_try_into().unwrap()
             }).build_seq();
 
-            //assert!(assert_invariants(&tree));
             
             dinotree_alg::colfind::QueryBuilder::new(&mut tree).query_par(|a,b|{
                 bot_prop.collide(a.inner,b.inner);
@@ -111,37 +109,16 @@ impl BotSystem{
                 let mouse=Mouse::new(*k,&self.mouse_prop);
                 let mouserect=mouse.get_rect().inner_try_into().unwrap();
                  
-                use dinotree_alg::rect::for_all_in_rect_mut;
-                for_all_in_rect_mut(&mut tree,&mouserect,|a|{
+                RectQueryMutBuilder::new(&mut tree,&mouserect).for_all_in_mut(|a|{
                     bot_prop.collide_mouse(a.inner,&mouse);
                 });
             }
             
-            dinotree_alg::rect::for_all_not_in_rect_mut(&mut tree,&border,|a|{
+            RectQueryMutBuilder::new(&mut tree,&border).for_all_not_in_mut(|a|{
                 duckduckgeo::collide_with_border(a.inner,border.as_ref(),0.5);
             });
-
-            tree.into_inner(&mut self.bots);
         
         }
-
-        /*
-        {
-            let (miny,maxy)=(border.y.left.into_inner(),border.y.right.into_inner());
-            let diff=maxy-miny;
-            let mid=diff/2.0;
-            for bot in self.bots.iter_mut(){
-                let offset=bot.pos.y-(miny+mid);
-                
-                let offset_dir=offset.signum();
-                let offset_mag=offset.abs();
-                //println!("offset={}",offset);
-                let push=-offset_dir*((offset_mag*0.001).max(0.01));
-                bot.acc.y+=push;
-            }
-        }
-        */
-
 
         //update bots
         for bot in self.bots.iter_mut() {
