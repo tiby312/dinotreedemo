@@ -95,9 +95,9 @@ impl BotSystem{
             let bot_prop=&self.bot_prop;
             
 
-            let mut tree=DinoTreeBuilder::new(axgeom::YAXISS,&mut self.bots,|bot|{
+            let mut tree=DinoTreeDirectBuilder::new(axgeom::YAXISS,&mut self.bots,|bot|{
                 bot.create_bbox(bot_prop).inner_try_into().unwrap()
-            }).build_seq();
+            }).build_par();
 
             
             dinotree_alg::colfind::QueryBuilder::new(&mut tree).query_par(|a,b|{
@@ -117,8 +117,12 @@ impl BotSystem{
             RectQueryMutBuilder::new(&mut tree,&border).for_all_not_in_mut(|a|{
                 duckduckgeo::collide_with_border(a.inner,border.as_ref(),0.5);
             });
-        
+
+            tree.into_inner(&mut self.bots);
+
         }
+
+
 
         //update bots
         for bot in self.bots.iter_mut() {
