@@ -1,6 +1,9 @@
+pub use dinotree;
 use crate::bot::*;
-use ordered_float::*;
-use axgeom::*;
+use dinotree::axgeom::ordered_float::*;
+use dinotree::axgeom::*;
+use dinotree::axgeom;
+
 use dinotree::prelude::*;
 use duckduckgeo::*;
 use dinotree_alg::rect::*;
@@ -95,13 +98,15 @@ impl BotSystem{
             let bot_prop=&self.bot_prop;
             
 
-            let mut tree=DinoTreeDirectBuilder::new(axgeom::YAXISS,&mut self.bots,|bot|{
+            let mut bots=create_bbox_mut(&mut self.bots,|bot|{
                 bot.create_bbox(bot_prop).inner_try_into().unwrap()
-            }).build_par();
+            });
+
+            let mut tree=DinoTreeBuilder::new(axgeom::YAXISS,&mut bots).build_par();
 
             
-            dinotree_alg::colfind::QueryBuilder::new(&mut tree).query_par(|a,b|{
-                bot_prop.collide(a.inner,b.inner);
+            dinotree_alg::colfind::QueryBuilder::new(&mut tree).query_par(|mut a,mut b|{
+                bot_prop.collide(a.inner_mut(),b.inner_mut());
             });
         
 
@@ -109,16 +114,14 @@ impl BotSystem{
                 let mouse=Mouse::new(*k,&self.mouse_prop);
                 let mouserect=mouse.get_rect().inner_try_into().unwrap();
                  
-                RectQueryMutBuilder::new(&mut tree,&mouserect).for_all_in_mut(|a|{
-                    bot_prop.collide_mouse(a.inner,&mouse);
+                for_all_in_rect_mut(&mut tree,&mouserect,|mut a|{
+                    bot_prop.collide_mouse(a.inner_mut(),&mouse);
                 });
             }
             
-            RectQueryMutBuilder::new(&mut tree,&border).for_all_not_in_mut(|a|{
-                duckduckgeo::collide_with_border(a.inner,border.as_ref(),0.5);
+            for_all_not_in_rect_mut(&mut tree,&border,|mut a|{
+                duckduckgeo::collide_with_border(a.inner_mut(),border.as_ref(),0.5);
             });
-
-            tree.into_inner(&mut self.bots);
 
         }
 
