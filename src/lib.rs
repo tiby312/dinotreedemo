@@ -1,4 +1,5 @@
 pub use dinotree;
+pub use duckduckgeo;
 use crate::bot::*;
 use dinotree::axgeom::ordered_float::*;
 use dinotree::axgeom::*;
@@ -63,6 +64,7 @@ impl BotSystem{
         
         let bot_prop=BotProp{
             radius:Dist::new(12.0),
+            //radius:Dist::new(20.0),
             collision_drag:0.003,
             collision_push:1.3,
             minimum_dis_sqr:0.0001,
@@ -75,8 +77,8 @@ impl BotSystem{
         //let session=DinoTreeCache::new(axgeom::YAXISS);
 
         let mouse_prop=MouseProp{
-            radius:Dist::new(200.0),
-            force:1.0
+            radius:Dist::new(100.0),
+            force:10.0//1.0
         };
         let b=BotSystem {
             mouse_prop,
@@ -86,9 +88,15 @@ impl BotSystem{
         (b,container_rect,bot_prop.radius.dis()*0.7)
     }
 
+    
     pub fn get_bots(&self)->&[Bot]{
         &self.bots
     }
+
+    pub fn get_bots_mut(&mut self)->&mut [Bot]{
+        &mut self.bots
+    }
+
 
     pub fn step(&mut self, poses: &[Vec2<f32>],border:&Rect<f32>) {
         
@@ -108,7 +116,7 @@ impl BotSystem{
             dinotree_alg::colfind::QueryBuilder::new(&mut tree).query_par(|mut a,mut b|{
                 bot_prop.collide(a.inner_mut(),b.inner_mut());
             });
-        
+            
 
             for k in poses{
                 let mouse=Mouse::new(*k,&self.mouse_prop);
@@ -142,7 +150,10 @@ impl BotSystem{
 pub struct NoBots;
 pub fn create_bots(num_bot:usize,bot_prop: &BotProp)->Result<(Vec<Bot>,axgeom::Rect<f32>),NoBots>{
     
-    let s=dists::spiral::Spiral::new([0.0,0.0],12.0,1.0);
+    //let s=dists::spiral::Spiral::new([0.0,0.0],12.0,1.0);
+    
+
+    let s=dists::grid::Grid::new(axgeom::Rect::new(-1800.,1800.,-1300.,1300.),num_bot);
 
     let bots:Vec<Bot>=s.take(num_bot).map(|pos|Bot::new(vec2(pos.x as f32,pos.y as f32))).collect();
 

@@ -6,9 +6,9 @@ edition = "2018"
 
 
 [dependencies]
-dists={git="https://github.com/tiby312/dinodists.git"}
-ordered-float = "0.5.0"
-axgeom = "1.0.5"
-dinotree = "0.2.7"
-num = "0.2.0"
-dinotree_alg="0.2.2"
+#dists = "*"
+dists={path="../dists"}
+dinotree = "*"
+dinotree_alg="*"
+#duckduckgeo="*"
+duckduckgeo={path="../duckduckgeo"}
