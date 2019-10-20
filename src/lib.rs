@@ -72,13 +72,13 @@ impl BotSystem{
         };
 
         let (bots,mut container_rect) = create_bots(num_bots,&bot_prop).unwrap();
-        container_rect.grow(200.0);
+        container_rect.grow(10.0);
         //let session=Session::new();
         //let session=DinoTreeCache::new(axgeom::YAXISS);
 
         let mouse_prop=MouseProp{
-            radius:Dist::new(100.0),
-            force:10.0//1.0
+            radius:Dist::new(150.0),
+            force:20.0//1.0
         };
         let b=BotSystem {
             mouse_prop,
@@ -153,7 +153,8 @@ pub fn create_bots(num_bot:usize,bot_prop: &BotProp)->Result<(Vec<Bot>,axgeom::R
     //let s=dists::spiral::Spiral::new([0.0,0.0],12.0,1.0);
     
 
-    let s=dists::grid::Grid::new(axgeom::Rect::new(-1800.,1800.,-1300.,1300.),num_bot);
+    let s=dists::grid::Grid::new(axgeom::Rect::new(-2000.,2000.,-1300.,1300.),num_bot);
+    //let s=dists::grid::Grid::new(axgeom::Rect::new(-30000.,30000.,-20000.,20000.),num_bot);
 
     let bots:Vec<Bot>=s.take(num_bot).map(|pos|Bot::new(vec2(pos.x as f32,pos.y as f32))).collect();
 
