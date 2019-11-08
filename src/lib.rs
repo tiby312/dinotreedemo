@@ -60,7 +60,7 @@ pub struct BotSystem {
 
 impl BotSystem{
 
-    pub fn new(num_bots:usize) -> (BotSystem,Rect<f32>,f32) {
+    pub fn new(aspect_ratio:f64,num_bots:usize) -> (BotSystem,Rect<f32>,f32) {
         
         let bot_prop=BotProp{
             radius:Dist::new(12.0),
@@ -71,13 +71,13 @@ impl BotSystem{
             viscousity_coeff:0.03
         };
 
-        let (bots,mut container_rect) = create_bots(num_bots,&bot_prop).unwrap();
+        let (bots,mut container_rect) = create_bots(aspect_ratio,num_bots,&bot_prop).unwrap();
         container_rect.grow(10.0);
         //let session=Session::new();
         //let session=DinoTreeCache::new(axgeom::YAXISS);
 
         let mouse_prop=MouseProp{
-            radius:Dist::new(150.0),
+            radius:Dist::new(200.0),
             force:20.0//1.0
         };
         let b=BotSystem {
@@ -119,13 +119,14 @@ impl BotSystem{
             
 
             for k in poses{
-                let mouse=Mouse::new(*k,&self.mouse_prop);
+                let mouse=Mouse::new(*k,self.mouse_prop);
                 let mouserect=mouse.get_rect().inner_try_into().unwrap();
                  
                 for_all_in_rect_mut(&mut tree,&mouserect,|mut a|{
                     bot_prop.collide_mouse(a.inner_mut(),&mouse);
                 });
             }
+            
             
             for_all_not_in_rect_mut(&mut tree,&border,|mut a|{
                 duckduckgeo::collide_with_border(a.inner_mut(),border.as_ref(),0.5);
@@ -148,15 +149,22 @@ impl BotSystem{
 
 #[derive(Copy,Clone,Debug)]
 pub struct NoBots;
-pub fn create_bots(num_bot:usize,bot_prop: &BotProp)->Result<(Vec<Bot>,axgeom::Rect<f32>),NoBots>{
+pub fn create_bots(aspect_ratio:f64,num_bot:usize,bot_prop: &BotProp)->Result<(Vec<Bot>,axgeom::Rect<f32>),NoBots>{
     
     //let s=dists::spiral::Spiral::new([0.0,0.0],12.0,1.0);
+
     
-
+    let mut bots=Vec::with_capacity(num_bot);
+    dists::grid::from_center(vec2(0.0,0.0),aspect_ratio as f32,10.0,num_bot,|v|{
+        bots.push(Bot::new(v))
+    });
+    
+    
+    /*
     let s=dists::grid::Grid::new(axgeom::Rect::new(-2000.,2000.,-1300.,1300.),num_bot);
-    //let s=dists::grid::Grid::new(axgeom::Rect::new(-30000.,30000.,-20000.,20000.),num_bot);
-
     let bots:Vec<Bot>=s.take(num_bot).map(|pos|Bot::new(vec2(pos.x as f32,pos.y as f32))).collect();
+    */
+    assert_eq!(bots.len(),num_bot);
 
     let rect=bots.iter().fold(None,|rect:Option<Rect<NotNan<f32>>>,bot|{
         match rect{
@@ -171,15 +179,26 @@ pub fn create_bots(num_bot:usize,bot_prop: &BotProp)->Result<(Vec<Bot>,axgeom::R
     });
 
 
+    
 
-    match rect{
+    let rect=match rect{
         Some(x)=>{
-            let xx=x.inner_into();
-            Ok((bots,xx))
+            x
         },
         None=>{
-            Err(NoBots)
+            return Err(NoBots)
         }
+    };
+    
+    let rect=rect.inner_into();
+    
+    /*
+    let midpoint=vec2(rect.x.right-rect.x.left,rect.y.right-rect.y.left);
+    for b in bots.iter_mut(){
+        b.pos-=midpoint;
     }
+    */
+
+    Ok((bots,rect))
 }
 

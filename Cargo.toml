@@ -6,9 +6,7 @@ edition = "2018"
 
 
 [dependencies]
-#dists = "*"
-dists={path="../dists"}
+dists = "*"
 dinotree = "*"
 dinotree_alg="*"
-#duckduckgeo="*"
-duckduckgeo={path="../duckduckgeo"}
+duckduckgeo="*"
