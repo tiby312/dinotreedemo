@@ -10,6 +10,134 @@ use duckduckgeo::*;
 use dinotree_alg::rect::*;
 
 
+
+/*
+type GridNum=isize;
+
+
+mod bot{
+    type BotIndex=usize;
+}
+mod card{
+
+}
+*/
+
+
+/*
+mod grid{
+    pub struct Grid{
+
+    }
+}
+
+mod pathfind{
+    struct PathFindInfo{
+        start:Vec2<GridNum>,
+        end:Vec2<GridNum>,
+        bot_index:BotIndex
+    }
+
+    struct PathFindTimer{
+        req:PathFindInfo,
+        //The number of ticks left before this request must be fulfilled.
+        time_put_in:usize
+    }
+
+
+    struct PathFindResult{
+        info:PathFindInfo,
+        path:PathfindSolution
+    }
+
+    const DELAY=60;
+    struct PathFinder{
+        requests:Queue<PathFindTimer>,
+        timer:usize //TODO what to do on overflow
+    }
+
+    impl PathFinder{
+        //add some new requests and also
+        //process some request
+        //
+        //all requests will be returned by this function after DELAY calls to this function.
+        //no sooner, no later.
+        fn handle_par(&mut self,grid:&Grid,new_requests:Vec<PathFindInfo>)->Vec<PathFindResult>{
+            
+            //add new requests to priority queue.
+
+            //pull a decent amount from the priority queue.
+            //at the very least pull out everything from the priotiy queue that needs to be computed in this tick.
+            //
+            //
+            //handle them in parallel.
+            self.timer+=1;
+        }
+
+    }
+}
+
+pub enum BotState{
+    DoingNothing,
+    Thinking,
+    Moving(ShortPathIter)
+}
+
+struct GridBot{
+    grid_position:Vec2<GridNum>,
+    state:BotState
+}
+
+
+pub struct MainLogic{
+    bots:Vec<Bot>
+    grid_bots:Vec<GridBot>
+}
+
+impl MainLogic{
+
+    fn step(&mut self){
+
+        let mut requests=Vec::new();
+        for b in bots.iter(){
+            if b.wants_to_go_to_store(){
+                b.state=Thinking.
+                requests.push(send_bot_to_store)
+            }
+        }
+
+        let results=self.pathfinder.handle_par(grid,requests);
+
+        for res in results{
+            let bot=&mut self.bots[res.bot_index];
+            assert!(bot.state!=Moving);
+            bot.state=Moving(res);
+        }
+
+
+        //actually move the bots now.
+        for b in bots.iter(){
+            b.move_to(self.grid_pos+b.moveing);
+
+            let new_grid_pos = self.grid.lookup_pos(b.pos);
+
+            if b.moving_up && new_grid_pos=b.grid_pos+vec2(0,1){
+                //move to new grid position
+            }else{
+                //the real life bot got pushed around to the worng grid.
+                //continue trying to get to the right grid.
+            }
+        }
+
+
+        let tree=DinoTreeBuilder::new(&mut self.bots);
+        colfind::query_par(&mut tree,|a,b|a.collide(b));
+
+
+    }
+}
+
+
 //input:
 //a minimum rectangle that must be visible in the game world
 //the window dimensions.
@@ -202,3 +330,7 @@ pub fn create_bots(aspect_ratio:f64,num_bot:usize,bot_prop: &BotProp)->Result<(V
     Ok((bots,rect))
 }
 
+
+
+
+*/
