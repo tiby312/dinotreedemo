@@ -10,134 +10,6 @@ use duckduckgeo::*;
 use dinotree_alg::rect::*;
 
 
-
-/*
-type GridNum=isize;
-
-
-mod bot{
-    type BotIndex=usize;
-}
-mod card{
-
-}
-*/
-
-
-/*
-mod grid{
-    pub struct Grid{
-
-    }
-}
-
-mod pathfind{
-    struct PathFindInfo{
-        start:Vec2<GridNum>,
-        end:Vec2<GridNum>,
-        bot_index:BotIndex
-    }
-
-    struct PathFindTimer{
-        req:PathFindInfo,
-        //The number of ticks left before this request must be fulfilled.
-        time_put_in:usize
-    }
-
-
-    struct PathFindResult{
-        info:PathFindInfo,
-        path:PathfindSolution
-    }
-
-    const DELAY=60;
-    struct PathFinder{
-        requests:Queue<PathFindTimer>,
-        timer:usize //TODO what to do on overflow
-    }
-
-    impl PathFinder{
-        //add some new requests and also
-        //process some request
-        //
-        //all requests will be returned by this function after DELAY calls to this function.
-        //no sooner, no later.
-        fn handle_par(&mut self,grid:&Grid,new_requests:Vec<PathFindInfo>)->Vec<PathFindResult>{
-            
-            //add new requests to priority queue.
-
-            //pull a decent amount from the priority queue.
-            //at the very least pull out everything from the priotiy queue that needs to be computed in this tick.
-            //
-            //
-            //handle them in parallel.
-            self.timer+=1;
-        }
-
-    }
-}
-
-pub enum BotState{
-    DoingNothing,
-    Thinking,
-    Moving(ShortPathIter)
-}
-
-struct GridBot{
-    grid_position:Vec2<GridNum>,
-    state:BotState
-}
-
-
-pub struct MainLogic{
-    bots:Vec<Bot>
-    grid_bots:Vec<GridBot>
-}
-
-impl MainLogic{
-
-    fn step(&mut self){
-
-        let mut requests=Vec::new();
-        for b in bots.iter(){
-            if b.wants_to_go_to_store(){
-                b.state=Thinking.
-                requests.push(send_bot_to_store)
-            }
-        }
-
-        let results=self.pathfinder.handle_par(grid,requests);
-
-        for res in results{
-            let bot=&mut self.bots[res.bot_index];
-            assert!(bot.state!=Moving);
-            bot.state=Moving(res);
-        }
-
-
-        //actually move the bots now.
-        for b in bots.iter(){
-            b.move_to(self.grid_pos+b.moveing);
-
-            let new_grid_pos = self.grid.lookup_pos(b.pos);
-
-            if b.moving_up && new_grid_pos=b.grid_pos+vec2(0,1){
-                //move to new grid position
-            }else{
-                //the real life bot got pushed around to the worng grid.
-                //continue trying to get to the right grid.
-            }
-        }
-
-
-        let tree=DinoTreeBuilder::new(&mut self.bots);
-        colfind::query_par(&mut tree,|a,b|a.collide(b));
-
-
-    }
-}
-
-
 //input:
 //a minimum rectangle that must be visible in the game world
 //the window dimensions.
@@ -188,7 +60,7 @@ pub struct BotSystem {
 
 impl BotSystem{
 
-    pub fn new(aspect_ratio:f64,num_bots:usize) -> (BotSystem,Rect<f32>,f32) {
+    pub fn new(num_bots:usize) -> (BotSystem,Rect<f32>,f32) {
         
         let bot_prop=BotProp{
             radius:Dist::new(12.0),
@@ -199,13 +71,13 @@ impl BotSystem{
             viscousity_coeff:0.03
         };
 
-        let (bots,mut container_rect) = create_bots(aspect_ratio,num_bots,&bot_prop).unwrap();
+        let (bots,mut container_rect) = create_bots(num_bots,&bot_prop).unwrap();
         container_rect.grow(10.0);
         //let session=Session::new();
         //let session=DinoTreeCache::new(axgeom::YAXISS);
 
         let mouse_prop=MouseProp{
-            radius:Dist::new(200.0),
+            radius:Dist::new(150.0),
             force:20.0//1.0
         };
         let b=BotSystem {
@@ -255,7 +127,6 @@ impl BotSystem{
                 });
             }
             
-            
             for_all_not_in_rect_mut(&mut tree,&border,|mut a|{
                 duckduckgeo::collide_with_border(a.inner_mut(),border.as_ref(),0.5);
             });
@@ -277,22 +148,15 @@ impl BotSystem{
 
 #[derive(Copy,Clone,Debug)]
 pub struct NoBots;
-pub fn create_bots(aspect_ratio:f64,num_bot:usize,bot_prop: &BotProp)->Result<(Vec<Bot>,axgeom::Rect<f32>),NoBots>{
+pub fn create_bots(num_bot:usize,bot_prop: &BotProp)->Result<(Vec<Bot>,axgeom::Rect<f32>),NoBots>{
     
     //let s=dists::spiral::Spiral::new([0.0,0.0],12.0,1.0);
+    
 
-    
-    let mut bots=Vec::with_capacity(num_bot);
-    dists::grid::from_center(vec2(0.0,0.0),aspect_ratio as f32,10.0,num_bot,|v|{
-        bots.push(Bot::new(v))
-    });
-    
-    
-    /*
     let s=dists::grid::Grid::new(axgeom::Rect::new(-2000.,2000.,-1300.,1300.),num_bot);
+    //let s=dists::grid::Grid::new(axgeom::Rect::new(-30000.,30000.,-20000.,20000.),num_bot);
+
     let bots:Vec<Bot>=s.take(num_bot).map(|pos|Bot::new(vec2(pos.x as f32,pos.y as f32))).collect();
-    */
-    assert_eq!(bots.len(),num_bot);
 
     let rect=bots.iter().fold(None,|rect:Option<Rect<NotNan<f32>>>,bot|{
         match rect{
@@ -307,30 +171,15 @@ pub fn create_bots(aspect_ratio:f64,num_bot:usize,bot_prop: &BotProp)->Result<(V
     });
 
 
-    
 
-    let rect=match rect{
+    match rect{
         Some(x)=>{
-            x
+            let xx=x.inner_into();
+            Ok((bots,xx))
         },
         None=>{
-            return Err(NoBots)
+            Err(NoBots)
         }
-    };
-    
-    let rect=rect.inner_into();
-    
-    /*
-    let midpoint=vec2(rect.x.right-rect.x.left,rect.y.right-rect.y.left);
-    for b in bots.iter_mut(){
-        b.pos-=midpoint;
     }
-    */
-
-    Ok((bots,rect))
 }
 
-
-
-
-*/
