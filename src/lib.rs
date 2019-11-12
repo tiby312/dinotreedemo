@@ -60,7 +60,7 @@ pub struct BotSystem {
 
 impl BotSystem{
 
-    pub fn new(num_bots:usize) -> (BotSystem,Rect<f32>,f32) {
+    pub fn new(aspect_ratio:f64,num_bots:usize) -> (BotSystem,Rect<f32>,f32) {
         
         let bot_prop=BotProp{
             radius:Dist::new(12.0),
@@ -71,7 +71,7 @@ impl BotSystem{
             viscousity_coeff:0.03
         };
 
-        let (bots,mut container_rect) = create_bots(num_bots,&bot_prop).unwrap();
+        let (bots,mut container_rect) = create_bots(aspect_ratio,num_bots,&bot_prop).unwrap();
         container_rect.grow(10.0);
         //let session=Session::new();
         //let session=DinoTreeCache::new(axgeom::YAXISS);
@@ -148,15 +148,17 @@ impl BotSystem{
 
 #[derive(Copy,Clone,Debug)]
 pub struct NoBots;
-pub fn create_bots(num_bot:usize,bot_prop: &BotProp)->Result<(Vec<Bot>,axgeom::Rect<f32>),NoBots>{
+pub fn create_bots(aspect_ratio:f64,num_bot:usize,bot_prop: &BotProp)->Result<(Vec<Bot>,axgeom::Rect<f32>),NoBots>{
     
     //let s=dists::spiral::Spiral::new([0.0,0.0],12.0,1.0);
     
 
-    let s=dists::grid::Grid::new(axgeom::Rect::new(-2000.,2000.,-1300.,1300.),num_bot);
+    //let s=dists::grid::Grid::new(axgeom::Rect::new(-2000.,2000.,-1300.,1300.),num_bot);
     //let s=dists::grid::Grid::new(axgeom::Rect::new(-30000.,30000.,-20000.,20000.),num_bot);
-
-    let bots:Vec<Bot>=s.take(num_bot).map(|pos|Bot::new(vec2(pos.x as f32,pos.y as f32))).collect();
+    let mut bots=Vec::with_capacity(num_bot);
+    let s=dists::grid::from_center(vec2(0.0,0.0),aspect_ratio as f32,10.0,num_bot,|pos|bots.push(Bot::new(pos)));
+    let bots=bots;
+    //let bots:Vec<Bot>=s.take(num_bot).map(|pos|Bot::new(vec2(pos.x as f32,pos.y as f32))).collect();
 
     let rect=bots.iter().fold(None,|rect:Option<Rect<NotNan<f32>>>,bot|{
         match rect{
