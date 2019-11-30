@@ -1,13 +1,10 @@
-pub use dinotree;
-pub use duckduckgeo;
 use crate::bot::*;
-use dinotree::axgeom::ordered_float::*;
-use dinotree::axgeom::*;
-use dinotree::axgeom;
 
-use dinotree::prelude::*;
+use ordered_float::*;
+use axgeom::*;
+use axgeom;
+use dinotree_alg::prelude::*;
 use duckduckgeo::*;
-use dinotree_alg::rect::*;
 
 
 //input:
@@ -15,11 +12,11 @@ use dinotree_alg::rect::*;
 //the window dimensions.
 //output:
 //the game world dimensions
-pub fn compute_border(rect:Rect<f32>,window:[f32;2])->Rect<f32>{
+pub fn compute_border(rect:Rect<f32>,window:Vec2<f32>)->Rect<f32>{
     
     println!("game word minimum={:?}",rect);
     println!("window={:?}",window);
-    let target_aspect_ratio=window[0]/window[1];
+    let target_aspect_ratio=window.x/window.y;
 
 
     let ((x1,x2),(y1,y2))=rect.get();
@@ -30,11 +27,11 @@ pub fn compute_border(rect:Rect<f32>,window:[f32;2])->Rect<f32>{
 
     let [xx,yy]=if target_aspect_ratio<current_aspect_ratio{
         //target is thinner
-        [0.0,-h+(window[1]*w)/window[0]]
+        [0.0,-h+(window.y*w)/window.x]
 
     }else{
         //target is wider
-        [window[0]*h/window[1]-w,0.0]
+        [window.x*h/window.y-w,0.0]
     };
 
     let xx_half=xx/2.0;
@@ -51,6 +48,7 @@ pub fn compute_border(rect:Rect<f32>,window:[f32;2])->Rect<f32>{
     r
 }
 
+
 pub struct BotSystem {
     mouse_prop:MouseProp,
     bots: Vec<Bot>,
@@ -64,18 +62,16 @@ impl BotSystem{
         
         let bot_prop=BotProp{
             radius:Dist::new(12.0),
-            //radius:Dist::new(20.0),
             collision_drag:0.003,
-            collision_push:1.3,
+            collision_push:0.2,
             minimum_dis_sqr:0.0001,
             viscousity_coeff:0.03
         };
 
         let (bots,mut container_rect) = create_bots(aspect_ratio,num_bots,&bot_prop).unwrap();
         container_rect.grow(10.0);
-        //let session=Session::new();
-        //let session=DinoTreeCache::new(axgeom::YAXISS);
-
+        
+        
         let mouse_prop=MouseProp{
             radius:Dist::new(150.0),
             force:20.0//1.0
@@ -106,14 +102,14 @@ impl BotSystem{
             let bot_prop=&self.bot_prop;
             
 
-            let mut bots=create_bbox_mut(&mut self.bots,|bot|{
+            let mut bots=bbox_helper::create_bbox_mut(&mut self.bots,|bot|{
                 bot.create_bbox(bot_prop).inner_try_into().unwrap()
             });
 
-            let mut tree=DinoTreeBuilder::new(axgeom::YAXISS,&mut bots).build_par();
+            let mut tree=DinoTree::new_par(&mut bots);
 
             
-            dinotree_alg::colfind::QueryBuilder::new(&mut tree).query_par(|mut a,mut b|{
+            tree.find_collisions_mut_par(|mut a,mut b|{
                 bot_prop.collide(a.inner_mut(),b.inner_mut());
             });
             
@@ -122,12 +118,12 @@ impl BotSystem{
                 let mouse=Mouse::new(*k,self.mouse_prop);
                 let mouserect=mouse.get_rect().inner_try_into().unwrap();
                  
-                for_all_in_rect_mut(&mut tree,&mouserect,|mut a|{
+                tree.for_all_in_rect_mut(&mouserect,|mut a|{
                     bot_prop.collide_mouse(a.inner_mut(),&mouse);
                 });
             }
             
-            for_all_not_in_rect_mut(&mut tree,&border,|mut a|{
+            tree.for_all_not_in_rect_mut(&border,|mut a|{
                 duckduckgeo::collide_with_border(a.inner_mut(),border.as_ref(),0.5);
             });
 
@@ -137,9 +133,7 @@ impl BotSystem{
 
         //update bots
         for bot in self.bots.iter_mut() {
-            bot.vel+=bot.acc;    
-            bot.pos+=bot.vel;
-            bot.acc=vec2(0.0,0.0);
+            bot.update();
         }        
     }
 
