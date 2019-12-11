@@ -6,6 +6,8 @@ edition = "2018"
 
 
 [dependencies]
+axgeom ="*"
+ordered-float ="*"
 dists = "*"
 dinotree = "*"
 dinotree_alg="*"
