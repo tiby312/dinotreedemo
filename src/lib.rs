@@ -16,7 +16,7 @@ pub struct BotSystem {
 
 
 impl BotSystem{
-    pub fn new(aspect_ratio:axgeom::AspectRatio,num_bots:usize) -> (BotSystem,axgeom::Vec2AspectRatio,f32) {
+    pub fn new(aspect_ratio:axgeom::AspectRatio,num_bots:usize) -> (BotSystem,axgeom::FixedAspectVec2,f32) {
         dbg!(aspect_ratio);
 
         let bot_prop=BotProp{
@@ -101,14 +101,14 @@ impl BotSystem{
 
 #[derive(Copy,Clone,Debug)]
 pub struct NoBots;
-pub fn create_bots(aspect_ratio:axgeom::AspectRatio,num_bot:usize,bot_prop: &BotProp)->(Vec<Bot>,axgeom::Vec2AspectRatio){
+pub fn create_bots(aspect_ratio:axgeom::AspectRatio,num_bot:usize,bot_prop: &BotProp)->(Vec<Bot>,axgeom::FixedAspectVec2){
     
     
     let mut bots=Vec::with_capacity(num_bot);
     
     let end:Vec2<f32>=dists::grid::from_top_left(vec2(0.0,0.0),aspect_ratio,10.0,num_bot,|pos|bots.push(Bot::new(pos)));
     
-    (bots,Vec2AspectRatio{ratio:aspect_ratio,width:end.x as f64})
+    (bots,FixedAspectVec2{ratio:aspect_ratio,width:end.x as f64})
     /*
     let bots=bots;
     
